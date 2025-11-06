@@ -14,16 +14,170 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      incidents: {
+        Row: {
+          assigned_volunteer_id: string | null
+          created_at: string
+          description: string | null
+          id: string
+          incident_type: Database["public"]["Enums"]["incident_type"]
+          location_address: string | null
+          location_lat: number
+          location_lng: number
+          reporter_id: string | null
+          resolved_at: string | null
+          severity: Database["public"]["Enums"]["incident_severity"]
+          status: Database["public"]["Enums"]["incident_status"]
+          updated_at: string
+          voice_transcript: string | null
+        }
+        Insert: {
+          assigned_volunteer_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          incident_type: Database["public"]["Enums"]["incident_type"]
+          location_address?: string | null
+          location_lat: number
+          location_lng: number
+          reporter_id?: string | null
+          resolved_at?: string | null
+          severity: Database["public"]["Enums"]["incident_severity"]
+          status?: Database["public"]["Enums"]["incident_status"]
+          updated_at?: string
+          voice_transcript?: string | null
+        }
+        Update: {
+          assigned_volunteer_id?: string | null
+          created_at?: string
+          description?: string | null
+          id?: string
+          incident_type?: Database["public"]["Enums"]["incident_type"]
+          location_address?: string | null
+          location_lat?: number
+          location_lng?: number
+          reporter_id?: string | null
+          resolved_at?: string | null
+          severity?: Database["public"]["Enums"]["incident_severity"]
+          status?: Database["public"]["Enums"]["incident_status"]
+          updated_at?: string
+          voice_transcript?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incidents_assigned_volunteer_id_fkey"
+            columns: ["assigned_volunteer_id"]
+            isOneToOne: false
+            referencedRelation: "volunteers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      profiles: {
+        Row: {
+          created_at: string
+          emergency_contact_name: string | null
+          emergency_contact_phone: string | null
+          full_name: string | null
+          id: string
+          phone: string | null
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name?: string | null
+          id: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          emergency_contact_name?: string | null
+          emergency_contact_phone?: string | null
+          full_name?: string | null
+          id?: string
+          phone?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
+      volunteers: {
+        Row: {
+          availability_status: boolean | null
+          certifications: string[] | null
+          created_at: string
+          id: string
+          location_lat: number | null
+          location_lng: number | null
+          skills: string[] | null
+          updated_at: string
+          user_id: string
+        }
+        Insert: {
+          availability_status?: boolean | null
+          certifications?: string[] | null
+          created_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id: string
+        }
+        Update: {
+          availability_status?: boolean | null
+          certifications?: string[] | null
+          created_at?: string
+          id?: string
+          location_lat?: number | null
+          location_lng?: number | null
+          skills?: string[] | null
+          updated_at?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "volunteer" | "traveler"
+      incident_severity: "critical" | "high" | "medium" | "low"
+      incident_status: "pending" | "in_progress" | "resolved" | "cancelled"
+      incident_type: "accident" | "breakdown" | "medical" | "fire" | "other"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +304,11 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "volunteer", "traveler"],
+      incident_severity: ["critical", "high", "medium", "low"],
+      incident_status: ["pending", "in_progress", "resolved", "cancelled"],
+      incident_type: ["accident", "breakdown", "medical", "fire", "other"],
+    },
   },
 } as const
