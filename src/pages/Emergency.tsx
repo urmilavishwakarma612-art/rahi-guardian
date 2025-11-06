@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AlertTriangle, Mic, MapPin, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { MapView } from "@/components/MapView";
 
 const Emergency = () => {
   const navigate = useNavigate();
@@ -94,14 +95,23 @@ const Emergency = () => {
               </div>
               
               {location ? (
-                <div className="bg-success/10 border border-success/20 rounded-lg p-4">
-                  <p className="text-sm font-medium text-success mb-1">Location Acquired</p>
-                  <p className="text-sm text-muted-foreground">
-                    Lat: {location.lat.toFixed(6)}, Lng: {location.lng.toFixed(6)}
-                  </p>
-                  <p className="text-xs text-muted-foreground mt-2">
-                    Emergency services will be dispatched to this location
-                  </p>
+                <div className="space-y-4">
+                  <div className="bg-success/10 border border-success/20 rounded-lg p-4">
+                    <p className="text-sm font-medium text-success mb-1">Location Acquired</p>
+                    <p className="text-sm text-muted-foreground">
+                      Lat: {location.lat.toFixed(6)}, Lng: {location.lng.toFixed(6)}
+                    </p>
+                    <p className="text-xs text-muted-foreground mt-2">
+                      Emergency services will be dispatched to this location
+                    </p>
+                  </div>
+                  <div className="rounded-lg overflow-hidden border">
+                    <MapView
+                      userLocation={location}
+                      selectedIncident={location}
+                      className="h-[300px]"
+                    />
+                  </div>
                 </div>
               ) : locationError ? (
                 <div className="bg-destructive/10 border border-destructive/20 rounded-lg p-4">

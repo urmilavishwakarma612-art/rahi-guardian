@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
@@ -5,8 +6,27 @@ import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Heart, MapPin, Clock, AlertTriangle, Navigation, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
+import { MapView, calculateDistance } from "@/components/MapView";
 
 const Volunteer = () => {
+  const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
+
+  useEffect(() => {
+    if ("geolocation" in navigator) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          setUserLocation({
+            lat: position.coords.latitude,
+            lng: position.coords.longitude,
+          });
+        },
+        (error) => {
+          console.error("Error getting location:", error);
+        }
+      );
+    }
+  }, []);
+
   const mockIncidents = [
     {
       id: 1,
@@ -14,6 +34,7 @@ const Volunteer = () => {
       severity: "critical",
       description: "Multi-vehicle collision on Highway 101 near Exit 42",
       location: "Highway 101, Exit 42",
+      coordinates: { lat: 37.7849, lng: -122.4094 },
       distance: "2.3 km",
       time: "2 minutes ago",
       status: "pending",
@@ -24,6 +45,7 @@ const Volunteer = () => {
       severity: "high",
       description: "Medical emergency - chest pain reported",
       location: "Highway 95, Mile Marker 128",
+      coordinates: { lat: 37.7649, lng: -122.4294 },
       distance: "5.1 km",
       time: "8 minutes ago",
       status: "pending",
@@ -34,10 +56,16 @@ const Volunteer = () => {
       severity: "medium",
       description: "Vehicle breakdown blocking right lane",
       location: "Interstate 5, Near Rest Stop",
+      coordinates: { lat: 37.7949, lng: -122.3994 },
       distance: "12.4 km",
       time: "15 minutes ago",
       status: "in_progress",
     },
+  ];
+
+  const mockVolunteers = [
+    { id: 1, name: "John Doe", location: { lat: 37.7749, lng: -122.4144 } },
+    { id: 2, name: "Jane Smith", location: { lat: 37.7849, lng: -122.4244 } },
   ];
   
   const handleRespond = (incidentId: number) => {
@@ -119,6 +147,21 @@ const Volunteer = () => {
             </div>
           </div>
           
+          {/* Map View */}
+          <Card className="p-0 overflow-hidden mb-8">
+            <MapView
+              incidents={mockIncidents.map(inc => ({
+                id: inc.id,
+                location: inc.coordinates,
+                severity: inc.severity,
+                description: inc.description,
+              }))}
+              volunteers={mockVolunteers}
+              userLocation={userLocation || undefined}
+              className="h-[500px] rounded-lg"
+            />
+          </Card>
+
           {/* Incident List */}
           <div className="space-y-4">
             <div className="flex items-center justify-between">
