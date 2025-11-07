@@ -10,20 +10,30 @@ import { MapView, calculateDistance } from "@/components/MapView";
 
 const Volunteer = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
-
+  const [accuracy, setAccuracy] = useState<number | null>(null);
   useEffect(() => {
     if ("geolocation" in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setUserLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-        },
-        (error) => {
-          console.error("Error getting location:", error);
-        }
-      );
+      const options: PositionOptions = {
+        enableHighAccuracy: true,
+        timeout: 15000,
+        maximumAge: 0,
+      };
+
+      const onSuccess = (position: GeolocationPosition) => {
+        const { latitude, longitude, accuracy: acc } = position.coords;
+        setUserLocation({ lat: latitude, lng: longitude });
+        setAccuracy(acc);
+        console.log("Geolocation fix (Volunteer):", { latitude, longitude, accuracy: acc, timestamp: position.timestamp });
+      };
+
+      const onError = (error: GeolocationPositionError) => {
+        console.error("Geolocation error (Volunteer):", error);
+      };
+
+      navigator.geolocation.getCurrentPosition(onSuccess, onError, options);
+      const watchId = navigator.geolocation.watchPosition(onSuccess, onError, options);
+
+      return () => navigator.geolocation.clearWatch(watchId);
     }
   }, []);
 
@@ -160,6 +170,15 @@ const Volunteer = () => {
               userLocation={userLocation || undefined}
               className="h-[500px] rounded-lg"
             />
+            <div className="p-3 border-t text-xs text-muted-foreground">
+              {userLocation ? (
+                <span>
+                  GPS accuracy ~{accuracy ? Math.round(accuracy) : "?"} m • Lat {userLocation.lat.toFixed(4)}, Lng {userLocation.lng.toFixed(4)}
+                </span>
+              ) : (
+                <span>Detecting your live location...</span>
+              )}
+            </div>
           </Card>
 
           {/* Incident List */}
