@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
-import { GoogleMap, LoadScript, Marker, DirectionsRenderer } from "@react-google-maps/api";
-import { MapPin, Navigation } from "lucide-react";
+import { MapContainer, TileLayer, Marker, Popup, useMap } from "react-leaflet";
+import L from "leaflet";
+import "leaflet-routing-machine";
+import { MapPin } from "lucide-react";
 
 interface Location {
   lat: number;
@@ -25,14 +27,94 @@ interface MapViewProps {
   className?: string;
 }
 
-const containerStyle = {
-  width: "100%",
-  height: "100%",
+// Fix default marker icon issue with Leaflet
+delete (L.Icon.Default.prototype as any)._getIconUrl;
+L.Icon.Default.mergeOptions({
+  iconRetinaUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png",
+  iconUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png",
+  shadowUrl: "https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png",
+});
+
+const getSeverityColor = (severity: string) => {
+  switch (severity) {
+    case "critical":
+      return "#ef4444";
+    case "high":
+      return "#f97316";
+    case "medium":
+      return "#3b82f6";
+    default:
+      return "#6b7280";
+  }
 };
 
-const defaultCenter = {
-  lat: 37.7749,
-  lng: -122.4194,
+const createCustomIcon = (color: string) => {
+  return L.divIcon({
+    className: "custom-marker",
+    html: `<div style="background-color: ${color}; width: 24px; height: 24px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3);"></div>`,
+    iconSize: [24, 24],
+    iconAnchor: [12, 12],
+  });
+};
+
+const createIncidentIcon = (severity: string) => {
+  const color = getSeverityColor(severity);
+  return L.divIcon({
+    className: "custom-marker",
+    html: `<div style="background-color: ${color}; width: 30px; height: 30px; border-radius: 50%; border: 3px solid white; box-shadow: 0 2px 8px rgba(0,0,0,0.3); display: flex; align-items: center; justify-content: center;">
+      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="white" stroke="white" stroke-width="2">
+        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/>
+        <line x1="12" y1="9" x2="12" y2="13"/>
+        <line x1="12" y1="17" x2="12.01" y2="17"/>
+      </svg>
+    </div>`,
+    iconSize: [30, 30],
+    iconAnchor: [15, 15],
+  });
+};
+
+// Component to handle routing
+const RoutingMachine = ({ userLocation, selectedIncident }: { userLocation: Location; selectedIncident: Location }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (!map || !userLocation || !selectedIncident) return;
+
+    const routingControl = (L.Routing as any).control({
+      waypoints: [
+        L.latLng(userLocation.lat, userLocation.lng),
+        L.latLng(selectedIncident.lat, selectedIncident.lng),
+      ],
+      routeWhileDragging: false,
+      addWaypoints: false,
+      lineOptions: {
+        styles: [{ color: "#3b82f6", weight: 4, opacity: 0.7 }],
+        extendToWaypoints: true,
+        missingRouteTolerance: 0,
+      },
+      show: false,
+      createMarker: () => null, // Don't create default markers
+    }).addTo(map);
+
+    return () => {
+      map.removeControl(routingControl);
+    };
+  }, [map, userLocation, selectedIncident]);
+
+  return null;
+};
+
+// Component to recenter map
+const RecenterMap = ({ center }: { center: Location }) => {
+  const map = useMap();
+
+  useEffect(() => {
+    if (center) {
+      map.setView([center.lat, center.lng], map.getZoom());
+    }
+  }, [center, map]);
+
+  return null;
 };
 
 export const MapView = ({
@@ -43,137 +125,64 @@ export const MapView = ({
   showDirections = false,
   className = "",
 }: MapViewProps) => {
-  const [directions, setDirections] = useState<google.maps.DirectionsResult | null>(null);
-  const [map, setMap] = useState<google.maps.Map | null>(null);
-  const [apiKey, setApiKey] = useState("");
-
+  const defaultCenter = { lat: 37.7749, lng: -122.4194 };
   const center = userLocation || selectedIncident || defaultCenter;
-
-  useEffect(() => {
-    // In production, this should come from Supabase secrets
-    // For now, we'll use an environment variable as fallback
-    const key = import.meta.env.VITE_GOOGLE_MAPS_API_KEY || "";
-    setApiKey(key);
-  }, []);
-
-  useEffect(() => {
-    if (showDirections && userLocation && selectedIncident && map) {
-      const directionsService = new google.maps.DirectionsService();
-      
-      directionsService.route(
-        {
-          origin: userLocation,
-          destination: selectedIncident,
-          travelMode: google.maps.TravelMode.DRIVING,
-        },
-        (result, status) => {
-          if (status === google.maps.DirectionsStatus.OK && result) {
-            setDirections(result);
-          }
-        }
-      );
-    }
-  }, [showDirections, userLocation, selectedIncident, map]);
-
-  const getSeverityColor = (severity: string) => {
-    switch (severity) {
-      case "critical":
-        return "#ef4444"; // emergency color
-      case "high":
-        return "#f97316"; // warning color
-      case "medium":
-        return "#3b82f6"; // primary color
-      default:
-        return "#6b7280"; // muted color
-    }
-  };
-
-  if (!apiKey) {
-    return (
-      <div className={`flex items-center justify-center bg-muted rounded-lg ${className}`}>
-        <div className="text-center p-8">
-          <MapPin className="h-12 w-12 mx-auto mb-4 text-muted-foreground" />
-          <p className="text-sm text-muted-foreground mb-2">Google Maps API key not configured</p>
-          <p className="text-xs text-muted-foreground">
-            Add GOOGLE_MAPS_API_KEY to your environment variables
-          </p>
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className={className}>
-      <LoadScript googleMapsApiKey={apiKey}>
-        <GoogleMap
-          mapContainerStyle={containerStyle}
-          center={center}
-          zoom={12}
-          onLoad={setMap}
-          options={{
-            styles: [
-              {
-                featureType: "poi",
-                elementType: "labels",
-                stylers: [{ visibility: "off" }],
-              },
-            ],
-          }}
-        >
-          {/* User location marker */}
-          {userLocation && (
-            <Marker
-              position={userLocation}
-              icon={{
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 8,
-                fillColor: "#3b82f6",
-                fillOpacity: 1,
-                strokeColor: "#ffffff",
-                strokeWeight: 2,
-              }}
-            />
-          )}
+      <MapContainer
+        center={[center.lat, center.lng]}
+        zoom={12}
+        style={{ width: "100%", height: "100%" }}
+        className="rounded-lg"
+      >
+        <TileLayer
+          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+        />
 
-          {/* Incident markers */}
-          {incidents.map((incident) => (
-            <Marker
-              key={incident.id}
-              position={incident.location}
-              icon={{
-                path: google.maps.SymbolPath.BACKWARD_CLOSED_ARROW,
-                scale: 6,
-                fillColor: getSeverityColor(incident.severity),
-                fillOpacity: 1,
-                strokeColor: "#ffffff",
-                strokeWeight: 2,
-                rotation: 180,
-              }}
-              title={incident.description}
-            />
-          ))}
+        <RecenterMap center={center} />
 
-          {/* Volunteer markers */}
-          {volunteers.map((volunteer) => (
-            <Marker
-              key={volunteer.id}
-              position={volunteer.location}
-              icon={{
-                path: google.maps.SymbolPath.CIRCLE,
-                scale: 6,
-                fillColor: "#22c55e",
-                fillOpacity: 1,
-                strokeColor: "#ffffff",
-                strokeWeight: 2,
-              }}
-              title={volunteer.name}
-            />
-          ))}
+        {/* User location marker */}
+        {userLocation && (
+          <Marker position={[userLocation.lat, userLocation.lng]} icon={createCustomIcon("#3b82f6")}>
+            <Popup>Your Location</Popup>
+          </Marker>
+        )}
 
-          {/* Directions */}
-          {directions && <DirectionsRenderer directions={directions} />}
-        </GoogleMap>
-      </LoadScript>
+        {/* Incident markers */}
+        {incidents.map((incident) => (
+          <Marker
+            key={incident.id}
+            position={[incident.location.lat, incident.location.lng]}
+            icon={createIncidentIcon(incident.severity)}
+          >
+            <Popup>
+              <div className="font-semibold">{incident.severity.toUpperCase()}</div>
+              <div className="text-sm">{incident.description}</div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* Volunteer markers */}
+        {volunteers.map((volunteer) => (
+          <Marker
+            key={volunteer.id}
+            position={[volunteer.location.lat, volunteer.location.lng]}
+            icon={createCustomIcon("#22c55e")}
+          >
+            <Popup>
+              <div className="font-semibold">{volunteer.name}</div>
+              <div className="text-sm">Volunteer</div>
+            </Popup>
+          </Marker>
+        ))}
+
+        {/* Directions */}
+        {showDirections && userLocation && selectedIncident && (
+          <RoutingMachine userLocation={userLocation} selectedIncident={selectedIncident} />
+        )}
+      </MapContainer>
     </div>
   );
 };
