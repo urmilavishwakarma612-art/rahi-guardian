@@ -136,52 +136,54 @@ export const MapView = ({
         style={{ width: "100%", height: "100%" }}
         className="rounded-lg"
       >
-        <TileLayer
-          attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
-          url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
-        />
+        <>
+          <TileLayer
+            attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+            url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
+          />
 
-        <RecenterMap center={center} />
+          <RecenterMap center={center} />
 
-        {/* User location marker */}
-        {userLocation && (
-          <Marker position={[userLocation.lat, userLocation.lng]} icon={createCustomIcon("#3b82f6")}>
-            <Popup>Your Location</Popup>
-          </Marker>
-        )}
+          {/* User location marker */}
+          {userLocation && (
+            <Marker position={[userLocation.lat, userLocation.lng]} icon={createCustomIcon("#3b82f6")}>
+              <Popup>Your Location</Popup>
+            </Marker>
+          )}
 
-        {/* Incident markers */}
-        {incidents.map((incident) => (
-          <Marker
-            key={incident.id}
-            position={[incident.location.lat, incident.location.lng]}
-            icon={createIncidentIcon(incident.severity)}
-          >
-            <Popup>
-              <div className="font-semibold">{incident.severity.toUpperCase()}</div>
-              <div className="text-sm">{incident.description}</div>
-            </Popup>
-          </Marker>
-        ))}
+          {/* Incident markers */}
+          {incidents.map((incident) => (
+            <Marker
+              key={incident.id}
+              position={[incident.location.lat, incident.location.lng]}
+              icon={createIncidentIcon(incident.severity)}
+            >
+              <Popup>
+                <div className="font-semibold">{incident.severity.toUpperCase()}</div>
+                <div className="text-sm">{incident.description}</div>
+              </Popup>
+            </Marker>
+          ))}
 
-        {/* Volunteer markers */}
-        {volunteers.map((volunteer) => (
-          <Marker
-            key={volunteer.id}
-            position={[volunteer.location.lat, volunteer.location.lng]}
-            icon={createCustomIcon("#22c55e")}
-          >
-            <Popup>
-              <div className="font-semibold">{volunteer.name}</div>
-              <div className="text-sm">Volunteer</div>
-            </Popup>
-          </Marker>
-        ))}
+          {/* Volunteer markers */}
+          {volunteers.map((volunteer) => (
+            <Marker
+              key={volunteer.id}
+              position={[volunteer.location.lat, volunteer.location.lng]}
+              icon={createCustomIcon("#22c55e")}
+            >
+              <Popup>
+                <div className="font-semibold">{volunteer.name}</div>
+                <div className="text-sm">Volunteer</div>
+              </Popup>
+            </Marker>
+          ))}
 
-        {/* Directions */}
-        {showDirections && userLocation && selectedIncident && (
-          <RoutingMachine userLocation={userLocation} selectedIncident={selectedIncident} />
-        )}
+          {/* Directions */}
+          {showDirections && userLocation && selectedIncident && (
+            <RoutingMachine userLocation={userLocation} selectedIncident={selectedIncident} />
+          )}
+        </>
       </MapContainer>
     </div>
   );
