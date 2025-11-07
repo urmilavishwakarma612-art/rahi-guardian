@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -8,6 +8,7 @@ import { AlertTriangle, Mic, MapPin, CheckCircle, XCircle, Loader2 } from "lucid
 import { toast } from "sonner";
 import { MapView } from "@/components/MapView";
 import { reverseGeocode } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const Emergency = () => {
   const navigate = useNavigate();
@@ -17,6 +18,8 @@ const Emergency = () => {
   const [transcript, setTranscript] = useState("");
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [address, setAddress] = useState<string>("Fetching address...");
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const recognitionRef = useRef<any>(null);
   // Get user location on component mount with high accuracy + continuous updates
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -75,27 +78,116 @@ const Emergency = () => {
   }, []);
   
   const startRecording = () => {
-    setIsRecording(true);
-    toast.info("Recording started. Describe your emergency...");
+    // Check browser support for Web Speech API
+    const SpeechRecognition = (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
     
-    // Simulate voice recording
-    setTimeout(() => {
-      setTranscript("Car accident on Highway 101, near Exit 42. Two vehicles involved. Need immediate medical assistance.");
+    if (!SpeechRecognition) {
+      toast.error("Speech recognition not supported in this browser");
+      return;
+    }
+
+    if (!location) {
+      toast.error("Please wait for location to be detected first");
+      return;
+    }
+
+    const recognition = new SpeechRecognition();
+    recognition.continuous = true;
+    recognition.interimResults = true;
+    recognition.lang = 'en-US';
+
+    recognition.onstart = () => {
+      setIsRecording(true);
+      setTranscript("");
+      toast.info("Recording started. Describe your emergency...");
+    };
+
+    recognition.onresult = (event: any) => {
+      let interimTranscript = '';
+      let finalTranscript = '';
+
+      for (let i = event.resultIndex; i < event.results.length; i++) {
+        const transcript = event.results[i][0].transcript;
+        if (event.results[i].isFinal) {
+          finalTranscript += transcript + ' ';
+        } else {
+          interimTranscript += transcript;
+        }
+      }
+
+      setTranscript((prev) => prev + finalTranscript || interimTranscript);
+    };
+
+    recognition.onerror = (event: any) => {
+      console.error('Speech recognition error:', event.error);
       setIsRecording(false);
-      toast.success("Recording complete");
-    }, 3000);
+      toast.error(`Recording error: ${event.error}`);
+    };
+
+    recognition.onend = () => {
+      setIsRecording(false);
+      if (transcript.trim()) {
+        toast.success("Recording complete");
+      }
+    };
+
+    recognitionRef.current = recognition;
+    recognition.start();
+  };
+
+  const stopRecording = () => {
+    if (recognitionRef.current) {
+      recognitionRef.current.stop();
+      setIsRecording(false);
+    }
   };
   
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!location) {
       toast.error("Location required for emergency report");
       return;
     }
-    
-    toast.success("Emergency report submitted! Volunteers are being notified.");
-    setTimeout(() => {
-      navigate("/volunteer");
-    }, 2000);
+
+    if (!transcript.trim()) {
+      toast.error("Please describe the emergency");
+      return;
+    }
+
+    setIsSubmitting(true);
+
+    try {
+      // Get current user
+      const { data: { user } } = await supabase.auth.getUser();
+
+      // Save incident to database
+      const { data, error } = await supabase
+        .from('incidents')
+        .insert({
+          description: transcript,
+          location_lat: location.lat,
+          location_lng: location.lng,
+          incident_type: 'accident', // Can be enhanced with AI classification
+          severity: 'high', // Can be enhanced with AI classification
+          status: 'pending',
+          reporter_id: user?.id || null,
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success("Emergency report submitted! Volunteers are being notified.");
+      
+      // Navigate to volunteer page after 2 seconds
+      setTimeout(() => {
+        navigate("/volunteer");
+      }, 2000);
+    } catch (error: any) {
+      console.error('Error submitting emergency:', error);
+      toast.error("Failed to submit report: " + error.message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
   
   return (
@@ -177,8 +269,8 @@ const Emergency = () => {
               
               <div className="text-center py-12">
                 <Button
-                  onClick={startRecording}
-                  disabled={isRecording || !location}
+                  onClick={isRecording ? stopRecording : startRecording}
+                  disabled={!location}
                   variant={isRecording ? "secondary" : "emergency"}
                   size="lg"
                   className="w-64 h-64 rounded-full text-xl font-bold shadow-emergency hover:scale-105 transition-all"
@@ -186,7 +278,7 @@ const Emergency = () => {
                   {isRecording ? (
                     <div className="flex flex-col items-center gap-3">
                       <Loader2 className="h-12 w-12 animate-spin" />
-                      <span>Recording...</span>
+                      <span>Recording...<br />Tap to Stop</span>
                     </div>
                   ) : (
                     <div className="flex flex-col items-center gap-3">
@@ -208,9 +300,24 @@ const Emergency = () => {
             {/* Submit Button */}
             {transcript && location && (
               <div className="space-y-4">
-                <Button onClick={handleSubmit} variant="success" size="lg" className="w-full">
-                  <CheckCircle className="h-5 w-5 mr-2" />
-                  Submit Emergency Report
+                <Button 
+                  onClick={handleSubmit} 
+                  variant="success" 
+                  size="lg" 
+                  className="w-full"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? (
+                    <>
+                      <Loader2 className="h-5 w-5 mr-2 animate-spin" />
+                      Submitting...
+                    </>
+                  ) : (
+                    <>
+                      <CheckCircle className="h-5 w-5 mr-2" />
+                      Submit Emergency Report
+                    </>
+                  )}
                 </Button>
                 <p className="text-xs text-center text-muted-foreground">
                   By submitting, you authorize RAHI to alert emergency services, volunteers, and your emergency contacts

@@ -4,15 +4,62 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MapPin, Clock, AlertTriangle, Navigation, CheckCircle } from "lucide-react";
+import { Heart, MapPin, Clock, AlertTriangle, Navigation, CheckCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { MapView, calculateDistance } from "@/components/MapView";
 import { reverseGeocode } from "@/lib/utils";
+import { supabase } from "@/integrations/supabase/client";
 
 const Volunteer = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [address, setAddress] = useState<string>("Detecting location...");
+  const [incidents, setIncidents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  // Fetch incidents from database
+  useEffect(() => {
+    const fetchIncidents = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('incidents')
+          .select('*')
+          .eq('status', 'pending')
+          .order('created_at', { ascending: false });
+
+        if (error) throw error;
+
+        setIncidents(data || []);
+      } catch (error: any) {
+        console.error('Error fetching incidents:', error);
+        toast.error("Failed to load incidents");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchIncidents();
+
+    // Subscribe to real-time updates
+    const channel = supabase
+      .channel('incidents-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'incidents',
+        },
+        () => {
+          fetchIncidents();
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, []);
+
   useEffect(() => {
     if ("geolocation" in navigator) {
       const options: PositionOptions = {
@@ -43,49 +90,46 @@ const Volunteer = () => {
     }
   }, []);
 
-  const mockIncidents = [
-    {
-      id: 1,
-      type: "accident",
-      severity: "critical",
-      description: "Multi-vehicle collision on Highway 101 near Exit 42",
-      location: "Highway 101, Exit 42",
-      coordinates: { lat: 37.7849, lng: -122.4094 },
-      distance: "2.3 km",
-      time: "2 minutes ago",
-      status: "pending",
-    },
-    {
-      id: 2,
-      type: "medical",
-      severity: "high",
-      description: "Medical emergency - chest pain reported",
-      location: "Highway 95, Mile Marker 128",
-      coordinates: { lat: 37.7649, lng: -122.4294 },
-      distance: "5.1 km",
-      time: "8 minutes ago",
-      status: "pending",
-    },
-    {
-      id: 3,
-      type: "breakdown",
-      severity: "medium",
-      description: "Vehicle breakdown blocking right lane",
-      location: "Interstate 5, Near Rest Stop",
-      coordinates: { lat: 37.7949, lng: -122.3994 },
-      distance: "12.4 km",
-      time: "15 minutes ago",
-      status: "in_progress",
-    },
-  ];
+  const calculateDistanceFromUser = (lat: number, lng: number) => {
+    if (!userLocation) return null;
+    return calculateDistance(
+      { lat: userLocation.lat, lng: userLocation.lng },
+      { lat, lng }
+    );
+  };
 
-  const mockVolunteers = [
-    { id: 1, name: "John Doe", location: { lat: 37.7749, lng: -122.4144 } },
-    { id: 2, name: "Jane Smith", location: { lat: 37.7849, lng: -122.4244 } },
-  ];
+  const formatTimeAgo = (timestamp: string) => {
+    const now = new Date();
+    const then = new Date(timestamp);
+    const diffMs = now.getTime() - then.getTime();
+    const diffMins = Math.floor(diffMs / 60000);
+    
+    if (diffMins < 1) return "Just now";
+    if (diffMins < 60) return `${diffMins} minute${diffMins > 1 ? 's' : ''} ago`;
+    const diffHours = Math.floor(diffMins / 60);
+    return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+  };
   
-  const handleRespond = (incidentId: number) => {
-    toast.success("Responding to incident! Navigation starting...");
+  const handleRespond = async (incidentId: string) => {
+    try {
+      // Update incident status
+      const { error } = await supabase
+        .from('incidents')
+        .update({ status: 'in_progress' })
+        .eq('id', incidentId);
+
+      if (error) throw error;
+
+      toast.success("Responding to incident! Navigation starting...");
+      
+      // Request notification permission if not granted
+      if ('Notification' in window && Notification.permission === 'default') {
+        await Notification.requestPermission();
+      }
+    } catch (error: any) {
+      console.error('Error responding to incident:', error);
+      toast.error("Failed to respond to incident");
+    }
   };
   
   const getSeverityColor = (severity: string) => {
@@ -125,7 +169,7 @@ const Volunteer = () => {
                 <div className="flex items-center justify-between">
                   <div>
                     <p className="text-sm text-muted-foreground">Active Incidents</p>
-                    <p className="text-2xl font-bold text-emergency">3</p>
+                    <p className="text-2xl font-bold text-emergency">{incidents.length}</p>
                   </div>
                   <AlertTriangle className="h-8 w-8 text-emergency" />
                 </div>
@@ -166,13 +210,12 @@ const Volunteer = () => {
           {/* Map View */}
           <Card className="p-0 overflow-hidden mb-8">
             <MapView
-              incidents={mockIncidents.map(inc => ({
+              incidents={incidents.map(inc => ({
                 id: inc.id,
-                location: inc.coordinates,
+                location: { lat: inc.location_lat, lng: inc.location_lng },
                 severity: inc.severity,
-                description: inc.description,
+                description: inc.description || 'No description',
               }))}
-              volunteers={mockVolunteers}
               userLocation={userLocation || undefined}
               className="h-[500px] rounded-lg"
             />
@@ -200,63 +243,81 @@ const Volunteer = () => {
               </Badge>
             </div>
             
-            {mockIncidents.map((incident) => (
-              <Card key={incident.id} className="p-6 hover:shadow-soft transition-all">
-                <div className="flex flex-col lg:flex-row lg:items-center gap-4">
-                  <div className="flex-1">
-                    <div className="flex items-start gap-3 mb-3">
-                      <Badge className={getSeverityColor(incident.severity)}>
-                        {incident.severity.toUpperCase()}
-                      </Badge>
-                      {incident.status === "in_progress" && (
-                        <Badge variant="outline" className="border-primary text-primary">
-                          In Progress
+            {loading ? (
+              <Card className="p-12 text-center">
+                <Loader2 className="h-8 w-8 animate-spin mx-auto mb-4 text-primary" />
+                <p className="text-muted-foreground">Loading incidents...</p>
+              </Card>
+            ) : incidents.length === 0 ? (
+              <Card className="p-12 text-center">
+                <CheckCircle className="h-12 w-12 mx-auto mb-4 text-success" />
+                <h3 className="text-xl font-semibold mb-2">No Active Emergencies</h3>
+                <p className="text-muted-foreground">Great! There are no pending emergencies in your area right now.</p>
+              </Card>
+            ) : (
+              incidents.map((incident) => {
+                const distance = calculateDistanceFromUser(incident.location_lat, incident.location_lng);
+                return (
+                <Card key={incident.id} className="p-6 hover:shadow-soft transition-all">
+                  <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+                    <div className="flex-1">
+                      <div className="flex items-start gap-3 mb-3">
+                        <Badge className={getSeverityColor(incident.severity)}>
+                          {incident.severity.toUpperCase()}
                         </Badge>
+                        {incident.status === "in_progress" && (
+                          <Badge variant="outline" className="border-primary text-primary">
+                            In Progress
+                          </Badge>
+                        )}
+                      </div>
+                      
+                      <h3 className="text-lg font-semibold mb-2">{incident.description || 'Emergency reported'}</h3>
+                      
+                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                        <div className="flex items-center gap-1">
+                          <MapPin className="h-4 w-4" />
+                          <span>Lat: {incident.location_lat.toFixed(4)}, Lng: {incident.location_lng.toFixed(4)}</span>
+                        </div>
+                        {distance && (
+                          <div className="flex items-center gap-1">
+                            <Navigation className="h-4 w-4" />
+                            <span>{distance.toFixed(1)} km away</span>
+                          </div>
+                        )}
+                        <div className="flex items-center gap-1">
+                          <Clock className="h-4 w-4" />
+                          <span>{formatTimeAgo(incident.created_at)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    
+                    <div className="flex flex-col gap-2">
+                      {incident.status === "pending" ? (
+                        <>
+                          <Button
+                            onClick={() => handleRespond(incident.id)}
+                            variant="emergency"
+                            className="gap-2"
+                          >
+                            <Heart className="h-4 w-4" />
+                            Respond to Emergency
+                          </Button>
+                          <Button variant="outline" size="sm">
+                            View Details
+                          </Button>
+                        </>
+                      ) : (
+                        <Button variant="outline" disabled>
+                          Already Responding
+                        </Button>
                       )}
                     </div>
-                    
-                    <h3 className="text-lg font-semibold mb-2">{incident.description}</h3>
-                    
-                    <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                      <div className="flex items-center gap-1">
-                        <MapPin className="h-4 w-4" />
-                        <span>{incident.location}</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Navigation className="h-4 w-4" />
-                        <span>{incident.distance} away</span>
-                      </div>
-                      <div className="flex items-center gap-1">
-                        <Clock className="h-4 w-4" />
-                        <span>{incident.time}</span>
-                      </div>
-                    </div>
                   </div>
-                  
-                  <div className="flex flex-col gap-2">
-                    {incident.status === "pending" ? (
-                      <>
-                        <Button
-                          onClick={() => handleRespond(incident.id)}
-                          variant="emergency"
-                          className="gap-2"
-                        >
-                          <Heart className="h-4 w-4" />
-                          Respond to Emergency
-                        </Button>
-                        <Button variant="outline" size="sm">
-                          View Details
-                        </Button>
-                      </>
-                    ) : (
-                      <Button variant="outline" disabled>
-                        Already Responding
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              </Card>
-            ))}
+                </Card>
+              );
+            })
+            )}
           </div>
           
           {/* Become a Volunteer CTA */}
