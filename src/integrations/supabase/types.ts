@@ -174,7 +174,7 @@ export type Database = {
       }
     }
     Enums: {
-      app_role: "admin" | "volunteer" | "traveler"
+      app_role: "admin" | "volunteer" | "traveler" | "authority"
       incident_severity: "critical" | "high" | "medium" | "low"
       incident_status: "pending" | "in_progress" | "resolved" | "cancelled"
       incident_type: "accident" | "breakdown" | "medical" | "fire" | "other"
@@ -305,7 +305,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      app_role: ["admin", "volunteer", "traveler"],
+      app_role: ["admin", "volunteer", "traveler", "authority"],
       incident_severity: ["critical", "high", "medium", "low"],
       incident_status: ["pending", "in_progress", "resolved", "cancelled"],
       incident_type: ["accident", "breakdown", "medical", "fire", "other"],

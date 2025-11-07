@@ -17,7 +17,7 @@ const Auth = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
-  const [role, setRole] = useState<"traveler" | "volunteer">("traveler");
+  const [role, setRole] = useState<"traveler" | "volunteer" | "authority">("traveler");
   
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,27 +38,13 @@ const Auth = () => {
       
       if (error) throw error;
       
-      // Add role to user_roles table
-      if (data.user) {
-        const { error: roleError } = await supabase
-          .from('user_roles')
-          .insert({
-            user_id: data.user.id,
-            role: role,
-          });
-        
-        if (roleError) {
-          console.error('Role assignment error:', roleError);
+      if (data?.user) {
+        toast.success(`Account created as ${role}! Please check your email to verify.`);
+        if (role === 'volunteer' || role === 'authority') {
+          navigate("/volunteer");
+        } else {
+          navigate("/");
         }
-      }
-      
-      toast.success("Account created! Please check your email to verify.");
-      
-      // Redirect based on role
-      if (role === 'volunteer') {
-        navigate("/volunteer");
-      } else {
-        navigate("/");
       }
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
@@ -79,8 +65,8 @@ const Auth = () => {
       
       if (error) throw error;
       
-      // Check user role and redirect accordingly
-      if (data.user) {
+      // Check user role to redirect appropriately
+      if (data?.user) {
         const { data: roleData } = await supabase
           .from('user_roles')
           .select('role')
@@ -196,7 +182,7 @@ const Auth = () => {
                   
                   <div>
                     <Label>I want to join as</Label>
-                    <div className="grid grid-cols-2 gap-3 mt-2">
+                    <div className="grid grid-cols-3 gap-3 mt-2">
                       <Button
                         type="button"
                         variant={role === "traveler" ? "default" : "outline"}
@@ -214,6 +200,15 @@ const Auth = () => {
                       >
                         <Heart className="h-6 w-6" />
                         <span className="text-xs">Volunteer</span>
+                      </Button>
+                      <Button
+                        type="button"
+                        variant={role === "authority" ? "default" : "outline"}
+                        onClick={() => setRole("authority")}
+                        className="flex flex-col items-center gap-2 h-auto py-4"
+                      >
+                        <Shield className="h-6 w-6" />
+                        <span className="text-xs">Authority</span>
                       </Button>
                     </div>
                   </div>

@@ -5,73 +5,81 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MapPin, Clock, AlertTriangle, Navigation, CheckCircle, Loader2, ShieldAlert } from "lucide-react";
+import { Heart, MapPin, Clock, AlertTriangle, Navigation, CheckCircle, Loader2, LogOut } from "lucide-react";
 import { toast } from "sonner";
 import { MapView, calculateDistance } from "@/components/MapView";
 import { reverseGeocode } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import type { User } from '@supabase/supabase-js';
 
 const Volunteer = () => {
   const navigate = useNavigate();
+  const [user, setUser] = useState<User | null>(null);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [address, setAddress] = useState<string>("Detecting location...");
   const [incidents, setIncidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isAuthorized, setIsAuthorized] = useState(false);
-  const [checkingAuth, setCheckingAuth] = useState(true);
-
+  
   // Check authentication and authorization
   useEffect(() => {
     const checkAuth = async () => {
       try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const { data: { user: currentUser } } = await supabase.auth.getUser();
         
-        if (!user) {
-          setCheckingAuth(false);
-          toast.error("Please sign in to access the volunteer dashboard");
-          setTimeout(() => navigate("/auth"), 2000);
+        if (!currentUser) {
+          toast.error("Please sign in as a volunteer or authority to access this page");
+          navigate("/auth");
           return;
         }
-
-        setIsAuthenticated(true);
-
+        
         // Check if user has volunteer or authority role
         const { data: roleData, error } = await supabase
           .from('user_roles')
           .select('role')
-          .eq('user_id', user.id)
+          .eq('user_id', currentUser.id)
           .single();
-
+        
         if (error || !roleData) {
-          console.error('Role check error:', error);
-          setIsAuthorized(false);
-          setCheckingAuth(false);
-          toast.error("Access denied. This page is for volunteers and authorities only.");
-          setTimeout(() => navigate("/"), 2000);
+          toast.error("Unable to verify your role");
+          navigate("/auth");
           return;
         }
-
-        if (roleData.role === 'volunteer' || roleData.role === 'authority') {
-          setIsAuthorized(true);
-        } else {
-          toast.error("Access denied. This page is for volunteers and authorities only.");
-          setTimeout(() => navigate("/"), 2000);
+        
+        if (roleData.role !== 'volunteer' && roleData.role !== 'authority' && roleData.role !== 'admin') {
+          toast.error("This page is only for volunteers and authorities");
+          navigate("/");
+          return;
         }
-      } catch (error: any) {
-        console.error('Auth check error:', error);
-        toast.error("Authentication error");
-        setTimeout(() => navigate("/auth"), 2000);
+        
+        setUser(currentUser);
+        setIsAuthorized(true);
+      } catch (error) {
+        console.error("Auth check error:", error);
+        navigate("/auth");
       } finally {
         setCheckingAuth(false);
       }
     };
-
+    
     checkAuth();
+    
+    // Subscribe to auth changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+      if (event === 'SIGNED_OUT') {
+        navigate("/auth");
+      }
+    });
+    
+    return () => subscription.unsubscribe();
   }, [navigate]);
+  
   // Fetch incidents from database
   useEffect(() => {
+    if (!isAuthorized) return;
+    
     const fetchIncidents = async () => {
       try {
         const { data, error } = await supabase
@@ -112,9 +120,11 @@ const Volunteer = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, []);
+  }, [isAuthorized]);
 
   useEffect(() => {
+    if (!isAuthorized) return;
+    
     if ("geolocation" in navigator) {
       const options: PositionOptions = {
         enableHighAccuracy: true,
@@ -142,7 +152,7 @@ const Volunteer = () => {
 
       return () => navigator.geolocation.clearWatch(watchId);
     }
-  }, []);
+  }, [isAuthorized]);
 
   const calculateDistanceFromUser = (lat: number, lng: number) => {
     if (!userLocation) return null;
@@ -199,44 +209,24 @@ const Volunteer = () => {
     }
   };
   
-  // Show loading state while checking authentication
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast.success("Signed out successfully");
+    navigate("/auth");
+  };
+  
   if (checkingAuth) {
     return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="container mx-auto px-4 pt-24 pb-20">
-          <Card className="p-12 text-center max-w-md mx-auto">
-            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
-            <p className="text-muted-foreground">Verifying access...</p>
-          </Card>
-        </main>
-        <Footer />
+      <div className="min-h-screen bg-background flex items-center justify-center">
+        <Loader2 className="h-8 w-8 animate-spin text-primary" />
       </div>
     );
   }
-
-  // Show unauthorized state
-  if (!isAuthenticated || !isAuthorized) {
-    return (
-      <div className="min-h-screen bg-background">
-        <Navbar />
-        <main className="container mx-auto px-4 pt-24 pb-20">
-          <Card className="p-12 text-center max-w-md mx-auto border-destructive/20 bg-destructive/5">
-            <ShieldAlert className="h-16 w-16 mx-auto mb-4 text-destructive" />
-            <h2 className="text-2xl font-bold mb-2">Access Restricted</h2>
-            <p className="text-muted-foreground mb-4">
-              This page is only accessible to registered volunteers and authorities.
-            </p>
-            <Button onClick={() => navigate("/auth")} variant="default">
-              Sign In as Volunteer
-            </Button>
-          </Card>
-        </main>
-        <Footer />
-      </div>
-    );
+  
+  if (!isAuthorized) {
+    return null;
   }
-
+  
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -245,14 +235,20 @@ const Volunteer = () => {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <div className="flex items-center gap-3 mb-4">
-              <div className="p-3 bg-gradient-hero rounded-lg">
-                <Heart className="h-8 w-8 text-primary-foreground" />
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-gradient-hero rounded-lg">
+                  <Heart className="h-8 w-8 text-primary-foreground" />
+                </div>
+                <div>
+                  <h1 className="text-4xl font-bold">Volunteer Dashboard</h1>
+                  <p className="text-muted-foreground">Active incidents in your area</p>
+                </div>
               </div>
-              <div>
-                <h1 className="text-4xl font-bold">Volunteer Dashboard</h1>
-                <p className="text-muted-foreground">Active incidents in your area</p>
-              </div>
+              <Button variant="outline" onClick={handleSignOut} className="gap-2">
+                <LogOut className="h-4 w-4" />
+                Sign Out
+              </Button>
             </div>
             
             {/* Stats */}
