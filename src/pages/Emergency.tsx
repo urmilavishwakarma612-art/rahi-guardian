@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { AlertTriangle, Mic, MapPin, CheckCircle, XCircle, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { MapView } from "@/components/MapView";
+import { reverseGeocode } from "@/lib/utils";
 
 const Emergency = () => {
   const navigate = useNavigate();
@@ -15,6 +16,7 @@ const Emergency = () => {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState("");
   const [accuracy, setAccuracy] = useState<number | null>(null);
+  const [address, setAddress] = useState<string>("Fetching address...");
   // Get user location on component mount with high accuracy + continuous updates
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -24,7 +26,7 @@ const Emergency = () => {
         maximumAge: 0,
       };
 
-      const onSuccess = (position: GeolocationPosition) => {
+      const onSuccess = async (position: GeolocationPosition) => {
         const { latitude, longitude, accuracy: acc } = position.coords;
         setLocation({ lat: latitude, lng: longitude });
         setAccuracy(acc);
@@ -33,6 +35,10 @@ const Emergency = () => {
           toast.success(`Location detected (accuracy: ${Math.round(acc)}m)`);
         }
         console.log("Geolocation fix:", { latitude, longitude, accuracy: acc, timestamp: position.timestamp });
+        
+        // Fetch address from coordinates
+        const fetchedAddress = await reverseGeocode(latitude, longitude);
+        setAddress(fetchedAddress);
       };
 
       const onError = (error: GeolocationPositionError) => {
@@ -130,8 +136,12 @@ const Emergency = () => {
                 <div className="space-y-4">
                   <div className="bg-success/10 border border-success/20 rounded-lg p-4">
                     <p className="text-sm font-medium text-success mb-1">Location Acquired</p>
-                    <p className="text-sm text-muted-foreground">
+                    <p className="text-sm font-semibold mb-2">{address}</p>
+                    <p className="text-xs text-muted-foreground">
                       Lat: {location.lat.toFixed(6)}, Lng: {location.lng.toFixed(6)}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      GPS Accuracy: ~{accuracy ? Math.round(accuracy) : "?"}m
                     </p>
                     <p className="text-xs text-muted-foreground mt-2">
                       Emergency services will be dispatched to this location

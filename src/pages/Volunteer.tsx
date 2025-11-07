@@ -7,10 +7,12 @@ import { Badge } from "@/components/ui/badge";
 import { Heart, MapPin, Clock, AlertTriangle, Navigation, CheckCircle } from "lucide-react";
 import { toast } from "sonner";
 import { MapView, calculateDistance } from "@/components/MapView";
+import { reverseGeocode } from "@/lib/utils";
 
 const Volunteer = () => {
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
+  const [address, setAddress] = useState<string>("Detecting location...");
   useEffect(() => {
     if ("geolocation" in navigator) {
       const options: PositionOptions = {
@@ -19,11 +21,15 @@ const Volunteer = () => {
         maximumAge: 0,
       };
 
-      const onSuccess = (position: GeolocationPosition) => {
+      const onSuccess = async (position: GeolocationPosition) => {
         const { latitude, longitude, accuracy: acc } = position.coords;
         setUserLocation({ lat: latitude, lng: longitude });
         setAccuracy(acc);
         console.log("Geolocation fix (Volunteer):", { latitude, longitude, accuracy: acc, timestamp: position.timestamp });
+        
+        // Fetch address from coordinates
+        const fetchedAddress = await reverseGeocode(latitude, longitude);
+        setAddress(fetchedAddress);
       };
 
       const onError = (error: GeolocationPositionError) => {
@@ -170,13 +176,16 @@ const Volunteer = () => {
               userLocation={userLocation || undefined}
               className="h-[500px] rounded-lg"
             />
-            <div className="p-3 border-t text-xs text-muted-foreground">
+            <div className="p-3 border-t text-xs space-y-1">
               {userLocation ? (
-                <span>
-                  GPS accuracy ~{accuracy ? Math.round(accuracy) : "?"} m • Lat {userLocation.lat.toFixed(4)}, Lng {userLocation.lng.toFixed(4)}
-                </span>
+                <>
+                  <p className="font-medium text-foreground">{address}</p>
+                  <p className="text-muted-foreground">
+                    GPS accuracy ~{accuracy ? Math.round(accuracy) : "?"} m • Lat {userLocation.lat.toFixed(4)}, Lng {userLocation.lng.toFixed(4)}
+                  </p>
+                </>
               ) : (
-                <span>Detecting your live location...</span>
+                <span className="text-muted-foreground">Detecting your live location...</span>
               )}
             </div>
           </Card>
