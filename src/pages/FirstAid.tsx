@@ -3,7 +3,9 @@ import { Footer } from "@/components/Footer";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Heart, Search, AlertTriangle, Flame, Activity, Droplet, Wind } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Badge } from "@/components/ui/badge";
+import { Heart, Search, AlertTriangle, Flame, Activity, Wind, Phone, Clock, Info } from "lucide-react";
 import { useState } from "react";
 
 const FirstAid = () => {
@@ -153,16 +155,28 @@ const FirstAid = () => {
       <main className="container mx-auto px-4 pt-24 pb-20">
         <div className="max-w-6xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8">
+          <div className="text-center mb-12">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-full mb-4">
               <Heart className="h-5 w-5" />
               <span className="font-semibold">First Aid Knowledge Center</span>
             </div>
-            <h1 className="text-4xl font-bold mb-4">Emergency First Aid Guide</h1>
-            <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+            <h1 className="text-5xl font-bold mb-4 bg-gradient-hero bg-clip-text text-transparent">
+              Emergency First Aid Guide
+            </h1>
+            <p className="text-lg text-muted-foreground max-w-2xl mx-auto mb-6">
               Life-saving instructions for common highway emergencies. 
-              These guides are for reference only - always call 911 in emergencies.
+              These guides are for reference only - always call emergency services.
             </p>
+            <div className="flex items-center justify-center gap-4">
+              <Button variant="emergency" size="lg" className="gap-2">
+                <Phone className="h-5 w-5" />
+                Call 911 Now
+              </Button>
+              <Button variant="outline" size="lg" className="gap-2">
+                <Info className="h-5 w-5" />
+                Safety Tips
+              </Button>
+            </div>
           </div>
           
           {/* Search */}
@@ -216,33 +230,45 @@ const FirstAid = () => {
             ))}
           </Tabs>
           
-          {/* Emergency Numbers */}
-          <Card className="mt-8 p-6 bg-emergency/10 border-emergency/20">
-            <div className="flex items-start gap-4">
-              <AlertTriangle className="h-6 w-6 text-emergency flex-shrink-0 mt-1" />
-              <div>
-                <h3 className="font-semibold text-lg mb-2 text-emergency">Emergency Contacts</h3>
-                <div className="grid sm:grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="font-medium">General Emergency</p>
-                    <p className="text-muted-foreground">Dial: <strong>911</strong></p>
-                  </div>
-                  <div>
-                    <p className="font-medium">Poison Control</p>
-                    <p className="text-muted-foreground">Dial: <strong>1-800-222-1222</strong></p>
-                  </div>
-                  <div>
-                    <p className="font-medium">Highway Patrol</p>
-                    <p className="text-muted-foreground">Dial: <strong>1-800-XXX-XXXX</strong></p>
-                  </div>
-                  <div>
-                    <p className="font-medium">Mental Health Crisis</p>
-                    <p className="text-muted-foreground">Dial: <strong>988</strong></p>
+          {/* Quick Actions */}
+          <div className="grid md:grid-cols-2 gap-6 mt-8">
+            <Card className="p-6 bg-emergency/10 border-emergency/20">
+              <div className="flex items-start gap-4">
+                <AlertTriangle className="h-6 w-6 text-emergency flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-3 text-emergency">Emergency Contacts</h3>
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">General Emergency</span>
+                      <Badge variant="destructive" className="text-base">911</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Poison Control</span>
+                      <Badge variant="outline">1-800-222-1222</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Mental Health Crisis</span>
+                      <Badge variant="outline">988</Badge>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </Card>
+            </Card>
+
+            <Card className="p-6 bg-primary/10 border-primary/20">
+              <div className="flex items-start gap-4">
+                <Clock className="h-6 w-6 text-primary flex-shrink-0 mt-1" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-lg mb-3 text-primary">Advanced Features</h3>
+                  <div className="space-y-2 text-sm text-muted-foreground">
+                    <p>• Detailed first-aid video tutorials <Badge variant="secondary" className="ml-2">Coming Soon</Badge></p>
+                    <p>• Interactive CPR training <Badge variant="secondary" className="ml-2">Coming Soon</Badge></p>
+                    <p>• Voice-guided emergency assistance <Badge variant="secondary" className="ml-2">Coming Soon</Badge></p>
+                  </div>
+                </div>
+              </div>
+            </Card>
+          </div>
           
           {/* Disclaimer */}
           <div className="mt-6 text-center text-sm text-muted-foreground">
