@@ -15,21 +15,43 @@ const Emergency = () => {
   const [locationError, setLocationError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState("");
   
-  // Get user location on component mount
+  // Get user location on component mount with high accuracy
   useEffect(() => {
     if ("geolocation" in navigator) {
+      const options = {
+        enableHighAccuracy: true, // Request GPS instead of network/WiFi location
+        timeout: 10000, // 10 second timeout
+        maximumAge: 0 // Don't use cached location
+      };
+      
       navigator.geolocation.getCurrentPosition(
         (position) => {
           setLocation({
             lat: position.coords.latitude,
             lng: position.coords.longitude,
           });
-          toast.success("Location detected successfully");
+          toast.success(`Location detected (accuracy: ${Math.round(position.coords.accuracy)}m)`);
         },
         (error) => {
-          setLocationError("Unable to access location. Please enable location services.");
-          toast.error("Location access denied");
-        }
+          let errorMessage = "Unable to access location. ";
+          
+          switch(error.code) {
+            case error.PERMISSION_DENIED:
+              errorMessage += "Please enable location permissions in your browser settings.";
+              break;
+            case error.POSITION_UNAVAILABLE:
+              errorMessage += "Location information unavailable. Try moving to an open area.";
+              break;
+            case error.TIMEOUT:
+              errorMessage += "Location request timed out. Please try again.";
+              break;
+          }
+          
+          setLocationError(errorMessage);
+          toast.error("Location access failed");
+          console.error("Geolocation error:", error);
+        },
+        options
       );
     } else {
       setLocationError("Geolocation is not supported by your browser");
