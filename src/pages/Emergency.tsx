@@ -14,45 +14,55 @@ const Emergency = () => {
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState("");
-  
-  // Get user location on component mount with high accuracy
+  const [accuracy, setAccuracy] = useState<number | null>(null);
+  // Get user location on component mount with high accuracy + continuous updates
   useEffect(() => {
     if ("geolocation" in navigator) {
-      const options = {
-        enableHighAccuracy: true, // Request GPS instead of network/WiFi location
-        timeout: 10000, // 10 second timeout
-        maximumAge: 0 // Don't use cached location
+      const options: PositionOptions = {
+        enableHighAccuracy: true, // Request GPS if available
+        timeout: 15000,
+        maximumAge: 0,
       };
-      
-      navigator.geolocation.getCurrentPosition(
-        (position) => {
-          setLocation({
-            lat: position.coords.latitude,
-            lng: position.coords.longitude,
-          });
-          toast.success(`Location detected (accuracy: ${Math.round(position.coords.accuracy)}m)`);
-        },
-        (error) => {
-          let errorMessage = "Unable to access location. ";
-          
-          switch(error.code) {
-            case error.PERMISSION_DENIED:
-              errorMessage += "Please enable location permissions in your browser settings.";
-              break;
-            case error.POSITION_UNAVAILABLE:
-              errorMessage += "Location information unavailable. Try moving to an open area.";
-              break;
-            case error.TIMEOUT:
-              errorMessage += "Location request timed out. Please try again.";
-              break;
-          }
-          
-          setLocationError(errorMessage);
-          toast.error("Location access failed");
-          console.error("Geolocation error:", error);
-        },
-        options
-      );
+
+      const onSuccess = (position: GeolocationPosition) => {
+        const { latitude, longitude, accuracy: acc } = position.coords;
+        setLocation({ lat: latitude, lng: longitude });
+        setAccuracy(acc);
+        // Only toast on the first reliable fix
+        if (!location) {
+          toast.success(`Location detected (accuracy: ${Math.round(acc)}m)`);
+        }
+        console.log("Geolocation fix:", { latitude, longitude, accuracy: acc, timestamp: position.timestamp });
+      };
+
+      const onError = (error: GeolocationPositionError) => {
+        let errorMessage = "Unable to access location. ";
+        switch (error.code) {
+          case error.PERMISSION_DENIED:
+            errorMessage += "Please enable location permissions in your browser settings.";
+            break;
+          case error.POSITION_UNAVAILABLE:
+            errorMessage += "Location information unavailable. Try moving to an open sky area and enable GPS.";
+            break;
+          case error.TIMEOUT:
+            errorMessage += "Location request timed out. Please try again.";
+            break;
+          default:
+            errorMessage += "Unknown error.";
+        }
+        setLocationError(errorMessage);
+        toast.error("Location access failed");
+        console.error("Geolocation error:", error);
+      };
+
+      // Get an immediate reading
+      navigator.geolocation.getCurrentPosition(onSuccess, onError, options);
+      // Start continuous updates to refine accuracy
+      const watchId = navigator.geolocation.watchPosition(onSuccess, onError, options);
+
+      return () => {
+        navigator.geolocation.clearWatch(watchId);
+      };
     } else {
       setLocationError("Geolocation is not supported by your browser");
     }
