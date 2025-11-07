@@ -24,12 +24,13 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signUp({
+      const { data, error } = await supabase.auth.signUp({
         email,
         password,
         options: {
           data: {
             full_name: fullName,
+            role: role,
           },
           emailRedirectTo: `${window.location.origin}/`,
         },
@@ -37,8 +38,28 @@ const Auth = () => {
       
       if (error) throw error;
       
+      // Add role to user_roles table
+      if (data.user) {
+        const { error: roleError } = await supabase
+          .from('user_roles')
+          .insert({
+            user_id: data.user.id,
+            role: role,
+          });
+        
+        if (roleError) {
+          console.error('Role assignment error:', roleError);
+        }
+      }
+      
       toast.success("Account created! Please check your email to verify.");
-      navigate("/");
+      
+      // Redirect based on role
+      if (role === 'volunteer') {
+        navigate("/volunteer");
+      } else {
+        navigate("/");
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to create account");
     } finally {
@@ -51,15 +72,29 @@ const Auth = () => {
     setLoading(true);
     
     try {
-      const { error } = await supabase.auth.signInWithPassword({
+      const { data, error } = await supabase.auth.signInWithPassword({
         email,
         password,
       });
       
       if (error) throw error;
       
-      toast.success("Welcome back!");
-      navigate("/");
+      // Check user role and redirect accordingly
+      if (data.user) {
+        const { data: roleData } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', data.user.id)
+          .single();
+        
+        toast.success("Welcome back!");
+        
+        if (roleData?.role === 'volunteer' || roleData?.role === 'authority') {
+          navigate("/volunteer");
+        } else {
+          navigate("/");
+        }
+      }
     } catch (error: any) {
       toast.error(error.message || "Failed to sign in");
     } finally {

@@ -1,21 +1,75 @@
 import { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MapPin, Clock, AlertTriangle, Navigation, CheckCircle, Loader2 } from "lucide-react";
+import { Heart, MapPin, Clock, AlertTriangle, Navigation, CheckCircle, Loader2, ShieldAlert } from "lucide-react";
 import { toast } from "sonner";
 import { MapView, calculateDistance } from "@/components/MapView";
 import { reverseGeocode } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 
 const Volunteer = () => {
+  const navigate = useNavigate();
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [address, setAddress] = useState<string>("Detecting location...");
   const [incidents, setIncidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [isAuthorized, setIsAuthorized] = useState(false);
+  const [checkingAuth, setCheckingAuth] = useState(true);
+
+  // Check authentication and authorization
+  useEffect(() => {
+    const checkAuth = async () => {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        if (!user) {
+          setCheckingAuth(false);
+          toast.error("Please sign in to access the volunteer dashboard");
+          setTimeout(() => navigate("/auth"), 2000);
+          return;
+        }
+
+        setIsAuthenticated(true);
+
+        // Check if user has volunteer or authority role
+        const { data: roleData, error } = await supabase
+          .from('user_roles')
+          .select('role')
+          .eq('user_id', user.id)
+          .single();
+
+        if (error || !roleData) {
+          console.error('Role check error:', error);
+          setIsAuthorized(false);
+          setCheckingAuth(false);
+          toast.error("Access denied. This page is for volunteers and authorities only.");
+          setTimeout(() => navigate("/"), 2000);
+          return;
+        }
+
+        if (roleData.role === 'volunteer' || roleData.role === 'authority') {
+          setIsAuthorized(true);
+        } else {
+          toast.error("Access denied. This page is for volunteers and authorities only.");
+          setTimeout(() => navigate("/"), 2000);
+        }
+      } catch (error: any) {
+        console.error('Auth check error:', error);
+        toast.error("Authentication error");
+        setTimeout(() => navigate("/auth"), 2000);
+      } finally {
+        setCheckingAuth(false);
+      }
+    };
+
+    checkAuth();
+  }, [navigate]);
   // Fetch incidents from database
   useEffect(() => {
     const fetchIncidents = async () => {
@@ -145,6 +199,44 @@ const Volunteer = () => {
     }
   };
   
+  // Show loading state while checking authentication
+  if (checkingAuth) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 pt-24 pb-20">
+          <Card className="p-12 text-center max-w-md mx-auto">
+            <Loader2 className="h-12 w-12 animate-spin mx-auto mb-4 text-primary" />
+            <p className="text-muted-foreground">Verifying access...</p>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
+  // Show unauthorized state
+  if (!isAuthenticated || !isAuthorized) {
+    return (
+      <div className="min-h-screen bg-background">
+        <Navbar />
+        <main className="container mx-auto px-4 pt-24 pb-20">
+          <Card className="p-12 text-center max-w-md mx-auto border-destructive/20 bg-destructive/5">
+            <ShieldAlert className="h-16 w-16 mx-auto mb-4 text-destructive" />
+            <h2 className="text-2xl font-bold mb-2">Access Restricted</h2>
+            <p className="text-muted-foreground mb-4">
+              This page is only accessible to registered volunteers and authorities.
+            </p>
+            <Button onClick={() => navigate("/auth")} variant="default">
+              Sign In as Volunteer
+            </Button>
+          </Card>
+        </main>
+        <Footer />
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
