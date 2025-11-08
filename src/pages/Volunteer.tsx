@@ -5,7 +5,9 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Heart, MapPin, Clock, AlertTriangle, Navigation, CheckCircle, Loader2, LogOut } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Textarea } from "@/components/ui/textarea";
+import { Heart, MapPin, Clock, AlertTriangle, Navigation, CheckCircle, Loader2, LogOut, Car, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
 import { MapView, calculateDistance } from "@/components/MapView";
 import { reverseGeocode } from "@/lib/utils";
@@ -22,6 +24,9 @@ const Volunteer = () => {
   const [address, setAddress] = useState<string>("Detecting location...");
   const [incidents, setIncidents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+  const [volunteerId, setVolunteerId] = useState<string | null>(null);
+  const [completingIncident, setCompletingIncident] = useState<string | null>(null);
+  const [notes, setNotes] = useState("");
   
   // Check authentication and authorization
   useEffect(() => {
@@ -76,16 +81,56 @@ const Volunteer = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
   
+  // Get or create volunteer record
+  useEffect(() => {
+    if (!isAuthorized || !user) return;
+    
+    const getVolunteerRecord = async () => {
+      try {
+        // Check if volunteer record exists
+        const { data: existing, error: fetchError } = await supabase
+          .from('volunteers')
+          .select('id')
+          .eq('user_id', user.id)
+          .single();
+        
+        if (fetchError && fetchError.code !== 'PGRST116') {
+          throw fetchError;
+        }
+        
+        if (existing) {
+          setVolunteerId(existing.id);
+        } else {
+          // Create volunteer record
+          const { data: newVolunteer, error: insertError } = await supabase
+            .from('volunteers')
+            .insert({ user_id: user.id, availability_status: true })
+            .select('id')
+            .single();
+          
+          if (insertError) throw insertError;
+          setVolunteerId(newVolunteer.id);
+        }
+      } catch (error: any) {
+        console.error('Error with volunteer record:', error);
+        toast.error("Failed to set up volunteer profile");
+      }
+    };
+    
+    getVolunteerRecord();
+  }, [isAuthorized, user]);
+  
   // Fetch incidents from database
   useEffect(() => {
-    if (!isAuthorized) return;
+    if (!isAuthorized || !volunteerId) return;
     
     const fetchIncidents = async () => {
       try {
+        // Fetch pending incidents OR incidents assigned to this volunteer
         const { data, error } = await supabase
           .from('incidents')
           .select('*')
-          .eq('status', 'pending')
+          .or(`status.eq.pending,assigned_volunteer_id.eq.${volunteerId}`)
           .order('created_at', { ascending: false });
 
         if (error) throw error;
@@ -174,25 +219,87 @@ const Volunteer = () => {
     return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
   };
   
-  const handleRespond = async (incidentId: string) => {
+  const handleAcceptMission = async (incidentId: string) => {
+    if (!volunteerId) {
+      toast.error("Volunteer profile not ready");
+      return;
+    }
+    
     try {
-      // Update incident status
       const { error } = await supabase
         .from('incidents')
-        .update({ status: 'in_progress' })
+        .update({ 
+          status: 'accepted',
+          assigned_volunteer_id: volunteerId 
+        })
         .eq('id', incidentId);
 
       if (error) throw error;
 
-      toast.success("Responding to incident! Navigation starting...");
+      toast.success("Mission accepted! Prepare to respond.");
       
-      // Request notification permission if not granted
       if ('Notification' in window && Notification.permission === 'default') {
         await Notification.requestPermission();
       }
     } catch (error: any) {
-      console.error('Error responding to incident:', error);
-      toast.error("Failed to respond to incident");
+      console.error('Error accepting mission:', error);
+      toast.error("Failed to accept mission");
+    }
+  };
+  
+  const handleOnTheWay = async (incidentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('incidents')
+        .update({ status: 'on_the_way' })
+        .eq('id', incidentId);
+
+      if (error) throw error;
+
+      toast.success("Status updated: On the way!");
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast.error("Failed to update status");
+    }
+  };
+  
+  const handleArrived = async (incidentId: string) => {
+    try {
+      const { error } = await supabase
+        .from('incidents')
+        .update({ status: 'arrived' })
+        .eq('id', incidentId);
+
+      if (error) throw error;
+
+      toast.success("Arrived at location! Stay safe.");
+    } catch (error: any) {
+      console.error('Error updating status:', error);
+      toast.error("Failed to update status");
+    }
+  };
+  
+  const handleCompleteIncident = async () => {
+    if (!completingIncident) return;
+    
+    try {
+      const { error } = await supabase
+        .from('incidents')
+        .update({ 
+          status: 'completed',
+          volunteer_notes: notes,
+          resolved_at: new Date().toISOString()
+        })
+        .eq('id', completingIncident);
+
+      if (error) throw error;
+
+      toast.success("Incident completed! Great work.");
+      setCompletingIncident(null);
+      setNotes("");
+    } catch (error: any) {
+      console.error('Error completing incident:', error);
+      toast.error("Failed to complete incident");
     }
   };
   
@@ -206,6 +313,21 @@ const Volunteer = () => {
         return "bg-primary text-primary-foreground";
       default:
         return "bg-muted text-muted-foreground";
+    }
+  };
+  
+  const getStatusBadge = (status: string) => {
+    switch (status) {
+      case "accepted":
+        return <Badge variant="outline" className="border-primary text-primary">Mission Accepted</Badge>;
+      case "on_the_way":
+        return <Badge variant="outline" className="border-warning text-warning">On The Way</Badge>;
+      case "arrived":
+        return <Badge variant="outline" className="border-success text-success">Arrived & Assisting</Badge>;
+      case "completed":
+        return <Badge variant="outline" className="border-muted text-muted">Completed</Badge>;
+      default:
+        return null;
     }
   };
   
@@ -353,11 +475,7 @@ const Volunteer = () => {
                         <Badge className={getSeverityColor(incident.severity)}>
                           {incident.severity.toUpperCase()}
                         </Badge>
-                        {incident.status === "in_progress" && (
-                          <Badge variant="outline" className="border-primary text-primary">
-                            In Progress
-                          </Badge>
-                        )}
+                        {getStatusBadge(incident.status)}
                       </div>
                       
                       <h3 className="text-lg font-semibold mb-2">{incident.description || 'Emergency reported'}</h3>
@@ -382,23 +500,44 @@ const Volunteer = () => {
                     
                     <div className="flex flex-col gap-2">
                       {incident.status === "pending" ? (
-                        <>
-                          <Button
-                            onClick={() => handleRespond(incident.id)}
-                            variant="emergency"
-                            className="gap-2"
-                          >
-                            <Heart className="h-4 w-4" />
-                            Respond to Emergency
-                          </Button>
-                          <Button variant="outline" size="sm">
-                            View Details
-                          </Button>
-                        </>
-                      ) : (
-                        <Button variant="outline" disabled>
-                          Already Responding
+                        <Button
+                          onClick={() => handleAcceptMission(incident.id)}
+                          variant="emergency"
+                          className="gap-2"
+                        >
+                          <Heart className="h-4 w-4" />
+                          Accept Mission
                         </Button>
+                      ) : incident.status === "accepted" ? (
+                        <Button
+                          onClick={() => handleOnTheWay(incident.id)}
+                          className="gap-2"
+                        >
+                          <Car className="h-4 w-4" />
+                          On The Way
+                        </Button>
+                      ) : incident.status === "on_the_way" ? (
+                        <Button
+                          onClick={() => handleArrived(incident.id)}
+                          className="gap-2"
+                        >
+                          <Stethoscope className="h-4 w-4" />
+                          Arrived & Assisting
+                        </Button>
+                      ) : incident.status === "arrived" ? (
+                        <Button
+                          onClick={() => setCompletingIncident(incident.id)}
+                          variant="default"
+                          className="gap-2"
+                        >
+                          <CheckCircle className="h-4 w-4" />
+                          Help Completed
+                        </Button>
+                      ) : (
+                        <Badge variant="secondary" className="justify-center py-2">
+                          <CheckCircle className="h-4 w-4 mr-1" />
+                          Completed
+                        </Badge>
                       )}
                     </div>
                   </div>
@@ -427,6 +566,34 @@ const Volunteer = () => {
       </main>
       
       <Footer />
+      
+      {/* Complete Incident Dialog */}
+      <Dialog open={!!completingIncident} onOpenChange={(open) => !open && setCompletingIncident(null)}>
+        <DialogContent>
+          <DialogHeader>
+            <DialogTitle>Complete Mission</DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <p className="text-sm text-muted-foreground">
+              Add any notes about the incident and assistance provided:
+            </p>
+            <Textarea
+              placeholder="Enter notes about the incident, treatment provided, or any observations..."
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={5}
+            />
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setCompletingIncident(null)}>
+              Cancel
+            </Button>
+            <Button onClick={handleCompleteIncident}>
+              Complete Mission
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 };

@@ -19,6 +19,7 @@ export type Database = {
           assigned_volunteer_id: string | null
           created_at: string
           description: string | null
+          estimated_arrival: string | null
           id: string
           incident_type: Database["public"]["Enums"]["incident_type"]
           location_address: string | null
@@ -30,11 +31,13 @@ export type Database = {
           status: Database["public"]["Enums"]["incident_status"]
           updated_at: string
           voice_transcript: string | null
+          volunteer_notes: string | null
         }
         Insert: {
           assigned_volunteer_id?: string | null
           created_at?: string
           description?: string | null
+          estimated_arrival?: string | null
           id?: string
           incident_type: Database["public"]["Enums"]["incident_type"]
           location_address?: string | null
@@ -46,11 +49,13 @@ export type Database = {
           status?: Database["public"]["Enums"]["incident_status"]
           updated_at?: string
           voice_transcript?: string | null
+          volunteer_notes?: string | null
         }
         Update: {
           assigned_volunteer_id?: string | null
           created_at?: string
           description?: string | null
+          estimated_arrival?: string | null
           id?: string
           incident_type?: Database["public"]["Enums"]["incident_type"]
           location_address?: string | null
@@ -62,6 +67,7 @@ export type Database = {
           status?: Database["public"]["Enums"]["incident_status"]
           updated_at?: string
           voice_transcript?: string | null
+          volunteer_notes?: string | null
         }
         Relationships: [
           {
@@ -176,7 +182,15 @@ export type Database = {
     Enums: {
       app_role: "admin" | "volunteer" | "traveler" | "authority"
       incident_severity: "critical" | "high" | "medium" | "low"
-      incident_status: "pending" | "in_progress" | "resolved" | "cancelled"
+      incident_status:
+        | "pending"
+        | "in_progress"
+        | "resolved"
+        | "cancelled"
+        | "accepted"
+        | "on_the_way"
+        | "arrived"
+        | "completed"
       incident_type: "accident" | "breakdown" | "medical" | "fire" | "other"
     }
     CompositeTypes: {
@@ -307,7 +321,16 @@ export const Constants = {
     Enums: {
       app_role: ["admin", "volunteer", "traveler", "authority"],
       incident_severity: ["critical", "high", "medium", "low"],
-      incident_status: ["pending", "in_progress", "resolved", "cancelled"],
+      incident_status: [
+        "pending",
+        "in_progress",
+        "resolved",
+        "cancelled",
+        "accepted",
+        "on_the_way",
+        "arrived",
+        "completed",
+      ],
       incident_type: ["accident", "breakdown", "medical", "fire", "other"],
     },
   },
