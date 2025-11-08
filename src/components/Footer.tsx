@@ -41,11 +41,11 @@ export const Footer = () => {
             <ul className="space-y-3 text-sm text-muted-foreground">
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                <span>Emergency: 911</span>
+                <span>Emergency: 108</span>
               </li>
               <li className="flex items-center gap-2">
                 <Phone className="h-4 w-4" />
-                <span>Highway Patrol: 1-800-XXX</span>
+                <span>Highway Emergency: 1033</span>
               </li>
               <li className="flex items-center gap-2">
                 <Mail className="h-4 w-4" />

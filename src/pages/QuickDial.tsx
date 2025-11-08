@@ -7,11 +7,11 @@ import { Phone, Clock, AlertTriangle, Heart, Shield, Flame, Users } from "lucide
 
 const QuickDial = () => {
   const mockNumbers = [
-    { icon: AlertTriangle, label: "Emergency Services", number: "911", color: "emergency" },
-    { icon: Shield, label: "Highway Patrol", number: "1-800-XXX-XXXX", color: "primary" },
-    { icon: Heart, label: "Poison Control", number: "1-800-222-1222", color: "success" },
-    { icon: Flame, label: "Fire Department", number: "1-800-XXX-XXXX", color: "warning" },
-    { icon: Users, label: "Mental Health Crisis", number: "988", color: "primary" },
+    { icon: AlertTriangle, label: "Ambulance", number: "108", color: "emergency" },
+    { icon: Shield, label: "Police", number: "100", color: "primary" },
+    { icon: Flame, label: "Fire Department", number: "101", color: "warning" },
+    { icon: Heart, label: "Road/Highway Emergency", number: "1033", color: "success" },
+    { icon: Users, label: "Women Helpline", number: "1091", color: "primary" },
   ];
 
   return (
@@ -97,7 +97,7 @@ const QuickDial = () => {
                 <h3 className="font-semibold text-lg mb-2 text-emergency">Important</h3>
                 <p className="text-sm text-muted-foreground">
                   This feature is in development. For immediate emergencies, 
-                  use your phone's dialer to call <strong>911</strong> directly.
+                  use your phone's dialer to call <strong>108</strong> directly.
                 </p>
               </div>
             </div>

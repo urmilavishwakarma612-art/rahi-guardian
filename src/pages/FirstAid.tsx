@@ -22,7 +22,7 @@ const FirstAid = () => {
           title: "Vehicle Collision Response",
           steps: [
             "Ensure your own safety first - park safely away from traffic",
-            "Call emergency services immediately (911)",
+            "Call emergency services immediately (108)",
             "Do not move injured persons unless there's immediate danger",
             "Check for breathing and pulse if safe to approach",
             "Apply pressure to any bleeding wounds with clean cloth",
@@ -33,7 +33,7 @@ const FirstAid = () => {
           title: "Motorcycle Accident",
           steps: [
             "Do NOT remove the helmet unless absolutely necessary",
-            "Call 911 immediately",
+            "Call 108 immediately",
             "Keep the person still to prevent spinal injury",
             "Cover with blanket to prevent shock",
             "Monitor breathing and consciousness",
@@ -50,7 +50,7 @@ const FirstAid = () => {
         {
           title: "Heart Attack",
           steps: [
-            "Call 911 immediately",
+            "Call 108 immediately",
             "Help the person sit down and rest",
             "Loosen tight clothing",
             "If they have prescribed medication (nitroglycerin), help them take it",
@@ -64,7 +64,7 @@ const FirstAid = () => {
             "Face: Ask to smile - is one side drooping?",
             "Arms: Ask to raise both arms - does one drift down?",
             "Speech: Ask to repeat a phrase - is speech slurred?",
-            "Time: If yes to any, call 911 immediately",
+            "Time: If yes to any, call 108 immediately",
             "Note the time symptoms started",
           ],
         },
@@ -75,7 +75,7 @@ const FirstAid = () => {
             "Maintain pressure for 10-15 minutes",
             "Do not remove cloth if blood soaks through - add more layers",
             "Elevate the wound above heart level if possible",
-            "Call 911 for severe bleeding",
+            "Call 108 for severe bleeding",
           ],
         },
       ],
@@ -91,7 +91,7 @@ const FirstAid = () => {
           steps: [
             "Get everyone out of the vehicle immediately",
             "Move at least 100 feet away",
-            "Call 911",
+            "Call 101",
             "Do NOT attempt to fight the fire yourself",
             "Warn other drivers to stay clear",
           ],
@@ -122,13 +122,13 @@ const FirstAid = () => {
             "Stand behind them and make a fist above the navel",
             "Grasp fist with other hand and give quick upward thrusts",
             "Repeat until object is expelled",
-            "Call 911 if unsuccessful or if person becomes unconscious",
+            "Call 108 if unsuccessful or if person becomes unconscious",
           ],
         },
         {
           title: "CPR - Adult",
           steps: [
-            "Call 911 or have someone else call",
+            "Call 108 or have someone else call",
             "Place person on firm, flat surface",
             "Kneel beside them and place heel of hand on center of chest",
             "Place other hand on top, interlock fingers",
@@ -170,7 +170,7 @@ const FirstAid = () => {
             <div className="flex items-center justify-center gap-4">
               <Button variant="emergency" size="lg" className="gap-2">
                 <Phone className="h-5 w-5" />
-                Call 911 Now
+                Call 108 Now
               </Button>
               <Button variant="outline" size="lg" className="gap-2">
                 <Info className="h-5 w-5" />
@@ -239,16 +239,20 @@ const FirstAid = () => {
                   <h3 className="font-semibold text-lg mb-3 text-emergency">Emergency Contacts</h3>
                   <div className="space-y-3 text-sm">
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">General Emergency</span>
-                      <Badge variant="destructive" className="text-base">911</Badge>
+                      <span className="font-medium">Ambulance</span>
+                      <Badge variant="destructive" className="text-base">108</Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">Poison Control</span>
-                      <Badge variant="outline">1-800-222-1222</Badge>
+                      <span className="font-medium">Police</span>
+                      <Badge variant="outline">100</Badge>
                     </div>
                     <div className="flex justify-between items-center">
-                      <span className="font-medium">Mental Health Crisis</span>
-                      <Badge variant="outline">988</Badge>
+                      <span className="font-medium">Fire Department</span>
+                      <Badge variant="outline">101</Badge>
+                    </div>
+                    <div className="flex justify-between items-center">
+                      <span className="font-medium">Highway Emergency</span>
+                      <Badge variant="outline">1033</Badge>
                     </div>
                   </div>
                 </div>
