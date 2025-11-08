@@ -45,6 +45,14 @@ export const Navbar = () => {
               First Aid
             </Link>
             <Link 
+              to="/volunteer" 
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/volunteer") ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              Volunteer
+            </Link>
+            <Link 
               to="/nearby-services" 
               className={`text-sm font-medium transition-colors hover:text-primary ${
                 isActive("/nearby-services") ? "text-primary" : "text-muted-foreground"
@@ -125,6 +133,15 @@ export const Navbar = () => {
                     }`}
                   >
                     First Aid
+                  </Link>
+                  <Link 
+                    to="/volunteer" 
+                    onClick={() => setIsOpen(false)}
+                    className={`text-lg font-medium transition-colors hover:text-primary ${
+                      isActive("/volunteer") ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    Volunteer
                   </Link>
                   <Link 
                     to="/nearby-services" 
