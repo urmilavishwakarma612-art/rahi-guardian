@@ -45,6 +45,30 @@ export const Navbar = () => {
               First Aid
             </Link>
             <Link 
+              to="/nearby-services" 
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/nearby-services") ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              Nearby Services
+            </Link>
+            <Link 
+              to="/quick-dial" 
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/quick-dial") ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              Quick Dial
+            </Link>
+            <Link 
+              to="/notifications" 
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/notifications") ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              Notifications
+            </Link>
+            <Link 
               to="/about" 
               className={`text-sm font-medium transition-colors hover:text-primary ${
                 isActive("/about") ? "text-primary" : "text-muted-foreground"
@@ -101,6 +125,33 @@ export const Navbar = () => {
                     }`}
                   >
                     First Aid
+                  </Link>
+                  <Link 
+                    to="/nearby-services" 
+                    onClick={() => setIsOpen(false)}
+                    className={`text-lg font-medium transition-colors hover:text-primary ${
+                      isActive("/nearby-services") ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    Nearby Services
+                  </Link>
+                  <Link 
+                    to="/quick-dial" 
+                    onClick={() => setIsOpen(false)}
+                    className={`text-lg font-medium transition-colors hover:text-primary ${
+                      isActive("/quick-dial") ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    Quick Dial
+                  </Link>
+                  <Link 
+                    to="/notifications" 
+                    onClick={() => setIsOpen(false)}
+                    className={`text-lg font-medium transition-colors hover:text-primary ${
+                      isActive("/notifications") ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    Notifications
                   </Link>
                   <Link 
                     to="/about" 
