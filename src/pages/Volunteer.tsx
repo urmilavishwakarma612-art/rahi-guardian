@@ -5,7 +5,7 @@ import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Heart, MapPin, Clock, AlertTriangle, Navigation, CheckCircle, Loader2, LogOut, Car, Stethoscope } from "lucide-react";
 import { toast } from "sonner";
@@ -165,7 +165,7 @@ const Volunteer = () => {
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [isAuthorized]);
+  }, [isAuthorized, volunteerId]);
 
   useEffect(() => {
     if (!isAuthorized) return;
@@ -572,11 +572,11 @@ const Volunteer = () => {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Complete Mission</DialogTitle>
+            <DialogDescription>
+              Add any notes about the incident and assistance provided
+            </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
-            <p className="text-sm text-muted-foreground">
-              Add any notes about the incident and assistance provided:
-            </p>
             <Textarea
               placeholder="Enter notes about the incident, treatment provided, or any observations..."
               value={notes}
