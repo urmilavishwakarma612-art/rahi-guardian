@@ -55,8 +55,16 @@ export const Footer = () => {
           </div>
         </div>
         
-        <div className="border-t border-border mt-8 pt-8 text-center text-sm text-muted-foreground">
-          <p>&copy; 2025 RAHI. All rights reserved. Built with care for safer highways.</p>
+        <div className="border-t border-border mt-8 pt-8 text-center space-y-3">
+          <div className="bg-warning/10 border border-warning/20 rounded-lg p-4 max-w-3xl mx-auto">
+            <p className="text-sm font-semibold text-warning">
+              ⚠️ Important Disclaimer
+            </p>
+            <p className="text-sm text-muted-foreground mt-1">
+              This is a prototype MVP. Do not rely on RAHI during real emergencies. Always call official emergency services (108, 100, 101, 1033) directly.
+            </p>
+          </div>
+          <p className="text-sm text-muted-foreground">&copy; 2025 RAHI. All rights reserved. Built with care for safer highways.</p>
         </div>
       </div>
     </footer>

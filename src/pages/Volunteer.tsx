@@ -459,10 +459,10 @@ const Volunteer = () => {
                 <p className="text-muted-foreground">Loading incidents...</p>
               </Card>
             ) : incidents.length === 0 ? (
-              <Card className="p-12 text-center">
+              <Card className="p-12 text-center bg-success/5 border-success/20">
                 <CheckCircle className="h-12 w-12 mx-auto mb-4 text-success" />
-                <h3 className="text-xl font-semibold mb-2">No Active Emergencies</h3>
-                <p className="text-muted-foreground">Great! There are no pending emergencies in your area right now.</p>
+                <h3 className="text-xl font-semibold mb-2">No active emergencies right now ✅</h3>
+                <p className="text-muted-foreground">Stay alert — you might receive a call anytime!</p>
               </Card>
             ) : (
               incidents.map((incident) => {
