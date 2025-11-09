@@ -1,12 +1,4 @@
-Perfect ✅
-Yeh **final polished README** hai — directly GitHub me paste kar do.
-Hackathon + Long-term use ke complete structure ke saath.
-
----
-
-## ✅ Final README — Ready to Paste
-
-````md
+ 
 # 🚨 RAHI – Real-time Assistant for Highway Incidents
 
 **RAHI** is a smart emergency-response web platform designed to help people facing accidents, injuries, medical issues, or vehicle breakdowns on highways.  
