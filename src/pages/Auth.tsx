@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Shield, Heart, AlertTriangle } from "lucide-react";
 import { toast } from "sonner";
 import { supabase } from "@/integrations/supabase/client";
@@ -18,6 +19,25 @@ const Auth = () => {
   const [password, setPassword] = useState("");
   const [fullName, setFullName] = useState("");
   const [role, setRole] = useState<"traveler" | "volunteer" | "authority">("traveler");
+  const [resetEmail, setResetEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [isResetMode, setIsResetMode] = useState(false);
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  
+  // Check if user is coming back from password reset email
+  useEffect(() => {
+    const checkResetMode = async () => {
+      const { data: { session } } = await supabase.auth.getSession();
+      const hashParams = new URLSearchParams(window.location.hash.substring(1));
+      const type = hashParams.get('type');
+      
+      if (type === 'recovery' && session) {
+        setIsResetMode(true);
+      }
+    };
+    
+    checkResetMode();
+  }, []);
   
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -88,6 +108,54 @@ const Auth = () => {
     }
   };
   
+  const handleForgotPassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(resetEmail, {
+        redirectTo: `${window.location.origin}/auth`,
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Password reset link sent! Check your email.");
+      setForgotPasswordOpen(false);
+      setResetEmail("");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to send reset link");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
+  const handlePasswordUpdate = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+      
+      if (error) throw error;
+      
+      toast.success("Password updated successfully!");
+      setIsResetMode(false);
+      setNewPassword("");
+      
+      // Clear the hash from URL
+      window.history.replaceState(null, '', window.location.pathname);
+      
+      // Redirect to home
+      navigate("/");
+    } catch (error: any) {
+      toast.error(error.message || "Failed to update password");
+    } finally {
+      setLoading(false);
+    }
+  };
+  
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
@@ -96,12 +164,39 @@ const Auth = () => {
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
             <Shield className="h-16 w-16 mx-auto mb-4 text-primary" />
-            <h1 className="text-3xl font-bold mb-2">Welcome to RAHI</h1>
+            <h1 className="text-3xl font-bold mb-2">
+              {isResetMode ? "Reset Your Password" : "Welcome to RAHI"}
+            </h1>
             <p className="text-muted-foreground">
-              Join our community of lifesavers
+              {isResetMode ? "Enter your new password below" : "Join our community of lifesavers"}
             </p>
           </div>
           
+          {isResetMode ? (
+            <Card className="p-6">
+              <form onSubmit={handlePasswordUpdate} className="space-y-4">
+                <div>
+                  <Label htmlFor="new-password">New Password</Label>
+                  <Input
+                    id="new-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                  <p className="text-xs text-muted-foreground mt-1">
+                    Minimum 6 characters
+                  </p>
+                </div>
+                
+                <Button type="submit" className="w-full" disabled={loading}>
+                  {loading ? "Updating..." : "Update Password"}
+                </Button>
+              </form>
+            </Card>
+          ) : (
           <Card className="p-6">
             <Tabs defaultValue="signin" className="w-full">
               <TabsList className="grid w-full grid-cols-2 mb-6">
@@ -138,6 +233,38 @@ const Auth = () => {
                   <Button type="submit" className="w-full" disabled={loading}>
                     {loading ? "Signing in..." : "Sign In"}
                   </Button>
+                  
+                  <Dialog open={forgotPasswordOpen} onOpenChange={setForgotPasswordOpen}>
+                    <DialogTrigger asChild>
+                      <Button type="button" variant="link" className="w-full text-sm text-muted-foreground hover:text-primary">
+                        Forgot password?
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                      <DialogHeader>
+                        <DialogTitle>Reset Password</DialogTitle>
+                        <DialogDescription>
+                          Enter your email address and we'll send you a link to reset your password.
+                        </DialogDescription>
+                      </DialogHeader>
+                      <form onSubmit={handleForgotPassword} className="space-y-4">
+                        <div>
+                          <Label htmlFor="reset-email">Email</Label>
+                          <Input
+                            id="reset-email"
+                            type="email"
+                            placeholder="you@example.com"
+                            value={resetEmail}
+                            onChange={(e) => setResetEmail(e.target.value)}
+                            required
+                          />
+                        </div>
+                        <Button type="submit" className="w-full" disabled={loading}>
+                          {loading ? "Sending..." : "Send Reset Link"}
+                        </Button>
+                      </form>
+                    </DialogContent>
+                  </Dialog>
                 </form>
               </TabsContent>
               
@@ -224,6 +351,7 @@ const Auth = () => {
               </TabsContent>
             </Tabs>
           </Card>
+          )}
         </div>
       </main>
       
