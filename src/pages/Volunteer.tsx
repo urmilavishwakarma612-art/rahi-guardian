@@ -13,6 +13,7 @@ import { MapView, calculateDistance } from "@/components/MapView";
 import { reverseGeocode } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import type { User } from '@supabase/supabase-js';
+import { IncidentMediaGallery } from "@/components/IncidentMediaGallery";
 
 const Volunteer = () => {
   const navigate = useNavigate();
@@ -514,7 +515,7 @@ const Volunteer = () => {
                       
                       <h3 className="text-lg font-semibold mb-2">{incident.description || 'Emergency reported'}</h3>
                       
-                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
+                      <div className="flex flex-wrap gap-4 text-sm text-muted-foreground mb-4">
                         <div className="flex items-center gap-1">
                           <MapPin className="h-4 w-4" />
                           <span>Lat: {incident.location_lat.toFixed(4)}, Lng: {incident.location_lng.toFixed(4)}</span>
@@ -530,6 +531,9 @@ const Volunteer = () => {
                           <span>{formatTimeAgo(incident.created_at)}</span>
                         </div>
                       </div>
+                      
+                      {/* Media Gallery */}
+                      <IncidentMediaGallery incidentId={incident.id} />
                     </div>
                     
                     <div className="flex flex-col gap-2">

@@ -14,6 +14,47 @@ export type Database = {
   }
   public: {
     Tables: {
+      incident_media: {
+        Row: {
+          file_path: string
+          file_size: number
+          file_type: string
+          id: string
+          incident_id: string
+          mime_type: string
+          uploaded_at: string
+          uploaded_by: string | null
+        }
+        Insert: {
+          file_path: string
+          file_size: number
+          file_type: string
+          id?: string
+          incident_id: string
+          mime_type: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Update: {
+          file_path?: string
+          file_size?: number
+          file_type?: string
+          id?: string
+          incident_id?: string
+          mime_type?: string
+          uploaded_at?: string
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "incident_media_incident_id_fkey"
+            columns: ["incident_id"]
+            isOneToOne: false
+            referencedRelation: "incidents"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       incidents: {
         Row: {
           assigned_volunteer_id: string | null

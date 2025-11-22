@@ -4,13 +4,15 @@ import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { AlertTriangle, Mic, MapPin, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { AlertTriangle, Mic, MapPin, CheckCircle, XCircle, Loader2, Camera } from "lucide-react";
 import { toast } from "sonner";
 import { MapView } from "@/components/MapView";
 import { reverseGeocode } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { offlineQueue } from "@/lib/offlineQueue";
 import { useLanguage } from "@/contexts/LanguageContext";
+import { MediaUpload, type UploadedMedia } from "@/components/MediaUpload";
+import { uploadMultipleMedia } from "@/lib/mediaUpload";
 
 const Emergency = () => {
   const navigate = useNavigate();
@@ -23,6 +25,7 @@ const Emergency = () => {
   const [accuracy, setAccuracy] = useState<number | null>(null);
   const [address, setAddress] = useState<string>("Fetching address...");
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [mediaFiles, setMediaFiles] = useState<UploadedMedia[]>([]);
   const recognitionRef = useRef<any>(null);
   
   // Track online/offline status
@@ -259,6 +262,20 @@ const Emergency = () => {
 
       if (error) throw error;
 
+      // Upload media files if any
+      if (mediaFiles.length > 0 && data) {
+        toast.info(`📤 Uploading ${mediaFiles.length} evidence file(s)...`);
+        const uploadedMedia = await uploadMultipleMedia(
+          mediaFiles.map(m => m.file),
+          data.id,
+          user?.id || null
+        );
+        
+        if (uploadedMedia.length > 0) {
+          toast.success(`✅ Uploaded ${uploadedMedia.length} evidence file(s)`);
+        }
+      }
+
       toast.success("🚨 Emergency reported! AI-powered alert sent to volunteers.");
       
       // Navigate to volunteer page after 2 seconds
@@ -348,7 +365,7 @@ const Emergency = () => {
             <div className="mb-8">
               <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
                 <Mic className="h-5 w-5 text-primary" />
-                Describe the Emergency
+                {t('emergency.describe')}
               </h2>
               
               <div className="text-center py-12">
@@ -381,6 +398,22 @@ const Emergency = () => {
               )}
             </div>
             
+            {/* Photo/Video Evidence Upload */}
+            <div className="mb-8">
+              <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+                <Camera className="h-5 w-5 text-primary" />
+                Add Photo/Video Evidence (Optional)
+              </h2>
+              <MediaUpload
+                onMediaUploaded={setMediaFiles}
+                maxFiles={5}
+                disabled={isSubmitting}
+              />
+              <p className="text-xs text-muted-foreground mt-2">
+                Visual evidence helps volunteers assess the situation more accurately and respond faster
+              </p>
+            </div>
+            
             {/* Submit Button */}
             {transcript && location && (
               <div className="space-y-4">
@@ -394,12 +427,17 @@ const Emergency = () => {
                   {isSubmitting ? (
                     <>
                       <Loader2 className="h-5 w-5 mr-2 animate-spin" />
-                      Submitting...
+                      {t('emergency.submitting')}
                     </>
                   ) : (
                     <>
                       <CheckCircle className="h-5 w-5 mr-2" />
-                      Submit Emergency Report
+                      {t('emergency.submit')}
+                      {mediaFiles.length > 0 && (
+                        <span className="ml-2 text-xs">
+                          + {mediaFiles.length} file{mediaFiles.length > 1 ? 's' : ''}
+                        </span>
+                      )}
                     </>
                   )}
                 </Button>
