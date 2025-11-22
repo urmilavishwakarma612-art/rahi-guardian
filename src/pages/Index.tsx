@@ -3,13 +3,18 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { FloatingSOS } from "@/components/FloatingSOS";
+import { useLanguage } from "@/contexts/LanguageContext";
 import { AlertTriangle, MapPin, Heart, Shield, Clock, Phone, Users, Zap } from "lucide-react";
 import heroImage from "@/assets/hero-highway.jpg";
 
 const Index = () => {
+  const { t } = useLanguage();
+  
   return (
     <div className="min-h-screen bg-background">
       <Navbar />
+      <FloatingSOS />
       
       {/* Hero Section */}
       <section className="relative pt-24 pb-20 overflow-hidden">
@@ -19,28 +24,27 @@ const Index = () => {
             <div className="space-y-6">
               <div className="inline-block">
                 <span className="px-4 py-2 bg-primary/10 text-primary text-sm font-semibold rounded-full">
-                  🚨 Real-time Emergency Response
+                  {t('home.badge')}
                 </span>
               </div>
               <h1 className="text-5xl lg:text-6xl font-bold leading-tight">
-                Your Guardian on the{" "}
-                <span className="bg-gradient-hero bg-clip-text text-transparent">Highway</span>
+                {t('home.title')}{" "}
+                <span className="bg-gradient-hero bg-clip-text text-transparent">{t('home.titleHighlight')}</span>
               </h1>
               <p className="text-xl text-muted-foreground">
-                RAHI uses AI-powered emergency detection to connect you with help in seconds. 
-                Voice-activated reports, instant volunteer alerts, and real-time location tracking.
+                {t('home.subtitle')}
               </p>
               <div className="flex flex-col sm:flex-row gap-4 pt-4">
                 <Link to="/emergency">
                   <Button variant="emergency" size="lg" className="w-full sm:w-auto gap-2">
                     <AlertTriangle className="h-5 w-5" />
-                    Report Emergency Now
+                    {t('home.reportEmergency')}
                   </Button>
                 </Link>
-                <Link to="/install">
+                <Link to="/demo">
                   <Button variant="hero" size="lg" className="w-full sm:w-auto gap-2">
                     <Shield className="h-5 w-5" />
-                    Install App (Offline Mode)
+                    View Buildathon Demo
                   </Button>
                 </Link>
               </div>
@@ -48,15 +52,15 @@ const Index = () => {
               <div className="flex items-center gap-8 pt-6">
                 <div>
                   <div className="text-3xl font-bold text-primary">10K+</div>
-                  <div className="text-sm text-muted-foreground">Lives Saved</div>
+                  <div className="text-sm text-muted-foreground">{t('home.livesSaved')}</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-primary">500+</div>
-                  <div className="text-sm text-muted-foreground">Active Volunteers</div>
+                  <div className="text-sm text-muted-foreground">{t('home.volunteers')}</div>
                 </div>
                 <div>
                   <div className="text-3xl font-bold text-primary">&lt;2 min</div>
-                  <div className="text-sm text-muted-foreground">Avg Response Time</div>
+                  <div className="text-sm text-muted-foreground">{t('home.responseTime')}</div>
                 </div>
               </div>
             </div>

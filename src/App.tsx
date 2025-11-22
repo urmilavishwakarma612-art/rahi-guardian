@@ -14,6 +14,7 @@ import QuickDial from "./pages/QuickDial";
 import Notifications from "./pages/Notifications";
 import Analytics from "./pages/Analytics";
 import Install from "./pages/Install";
+import Demo from "./pages/Demo";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -36,6 +37,7 @@ const App = () => (
           <Route path="/notifications" element={<Notifications />} />
           <Route path="/analytics" element={<Analytics />} />
           <Route path="/install" element={<Install />} />
+          <Route path="/demo" element={<Demo />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>
