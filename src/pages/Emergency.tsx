@@ -9,10 +9,14 @@ import { toast } from "sonner";
 import { MapView } from "@/components/MapView";
 import { reverseGeocode } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
+import { offlineQueue } from "@/lib/offlineQueue";
+import { useLanguage } from "@/contexts/LanguageContext";
 
 const Emergency = () => {
   const navigate = useNavigate();
+  const { t } = useLanguage();
   const [isRecording, setIsRecording] = useState(false);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
   const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [locationError, setLocationError] = useState<string | null>(null);
   const [transcript, setTranscript] = useState("");
@@ -20,6 +24,27 @@ const Emergency = () => {
   const [address, setAddress] = useState<string>("Fetching address...");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const recognitionRef = useRef<any>(null);
+  
+  // Track online/offline status
+  useEffect(() => {
+    const handleOnline = () => {
+      setIsOnline(true);
+      toast.success("🌐 Back online! Syncing queued incidents...");
+    };
+    const handleOffline = () => {
+      setIsOnline(false);
+      toast.warning("📵 Offline mode - incidents will be queued");
+    };
+    
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+    
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+  
   // Get user location on component mount with high accuracy + continuous updates
   useEffect(() => {
     if ("geolocation" in navigator) {
@@ -155,6 +180,35 @@ const Emergency = () => {
 
     setIsSubmitting(true);
 
+    // Check if offline
+    if (!navigator.onLine) {
+      try {
+        const { data: { user } } = await supabase.auth.getUser();
+        
+        offlineQueue.add({
+          data: {
+            voice_transcript: transcript,
+            description: transcript,
+            location_lat: location.lat,
+            location_lng: location.lng,
+            location_address: address || null,
+            incident_type: 'accident' as const,
+            severity: 'high' as const,
+            reporter_id: user?.id || null,
+          }
+        });
+        
+        setIsSubmitting(false);
+        setTimeout(() => navigate("/volunteer"), 1500);
+        return;
+      } catch (error: any) {
+        console.error('Error queuing offline incident:', error);
+        toast.error("Failed to queue incident");
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     try {
       // Get AI analysis first
       toast.info("🤖 AI analyzing your emergency...");
@@ -229,11 +283,12 @@ const Emergency = () => {
           <div className="text-center mb-8">
             <div className="inline-flex items-center gap-2 px-4 py-2 bg-emergency/10 text-emergency rounded-full mb-4">
               <AlertTriangle className="h-5 w-5" />
-              <span className="font-semibold">Emergency Mode Active</span>
+              <span className="font-semibold">{t('emergency.active')}</span>
+              {!isOnline && <span className="text-xs ml-2">• OFFLINE MODE</span>}
             </div>
-            <h1 className="text-4xl font-bold mb-4">Report Highway Emergency</h1>
+            <h1 className="text-4xl font-bold mb-4">{t('emergency.title')}</h1>
             <p className="text-lg text-muted-foreground">
-              Stay calm. We're here to help. Provide details and we'll dispatch assistance immediately.
+              {t('emergency.subtitle')}
             </p>
           </div>
           
