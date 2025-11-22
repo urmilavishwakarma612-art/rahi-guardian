@@ -1,0 +1,25 @@
+{
+  "name": "RAHI - Real-time Assistant for Highway Incidents",
+  "short_name": "RAHI",
+  "description": "Smart emergency response system for highway incidents. Report emergencies, get AI-powered assistance, and connect with nearby volunteers.",
+  "theme_color": "#ef4444",
+  "background_color": "#ffffff",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "/",
+  "start_url": "/",
+  "icons": [
+    {
+      "src": "/LOGO-RAHI .png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/LOGO-RAHI .png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

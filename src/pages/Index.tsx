@@ -37,10 +37,10 @@ const Index = () => {
                     Report Emergency Now
                   </Button>
                 </Link>
-                <Link to="/volunteer">
+                <Link to="/install">
                   <Button variant="hero" size="lg" className="w-full sm:w-auto gap-2">
-                    <Heart className="h-5 w-5" />
-                    Become a Volunteer
+                    <Shield className="h-5 w-5" />
+                    Install App (Offline Mode)
                   </Button>
                 </Link>
               </div>
@@ -191,17 +191,18 @@ const Index = () => {
               Every Second Counts in an Emergency
             </h2>
             <p className="text-xl mb-8 opacity-90">
-              Join thousands who trust RAHI for highway safety. Download the app or sign up today.
+              Join thousands who trust RAHI for highway safety. Install the app to work offline during emergencies.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/emergency">
-                <Button size="lg" variant="secondary" className="w-full sm:w-auto">
-                  Try Emergency Demo
+              <Link to="/install">
+                <Button size="lg" variant="secondary" className="w-full sm:w-auto gap-2">
+                  <Shield className="h-5 w-5" />
+                  Install Offline App
                 </Button>
               </Link>
-              <Link to="/auth">
+              <Link to="/emergency">
                 <Button size="lg" variant="outline" className="w-full sm:w-auto border-primary-foreground text-primary-foreground hover:bg-primary-foreground hover:text-primary">
-                  Create Free Account
+                  Try Emergency Demo
                 </Button>
               </Link>
             </div>
