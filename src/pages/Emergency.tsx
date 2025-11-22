@@ -297,20 +297,20 @@ const Emergency = () => {
       <main className="container mx-auto px-4 pt-24 pb-20">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emergency/10 text-emergency rounded-full mb-4">
-              <AlertTriangle className="h-5 w-5" />
+          <div className="text-center mb-8 animate-fade-in">
+            <div className="inline-flex items-center gap-2 px-4 py-2 bg-emergency/10 text-emergency rounded-full mb-4 backdrop-blur-sm border border-emergency/20 animate-glow">
+              <AlertTriangle className="h-5 w-5 animate-pulse" />
               <span className="font-semibold">{t('emergency.active')}</span>
               {!isOnline && <span className="text-xs ml-2">• OFFLINE MODE</span>}
             </div>
-            <h1 className="text-4xl font-bold mb-4">{t('emergency.title')}</h1>
-            <p className="text-lg text-muted-foreground">
+            <h1 className="text-4xl font-bold mb-4 animate-slide-up">{t('emergency.title')}</h1>
+            <p className="text-lg text-muted-foreground animate-slide-up" style={{ animationDelay: '0.1s' }}>
               {t('emergency.subtitle')}
             </p>
           </div>
           
           {/* Main Emergency Card */}
-          <Card className="p-8 mb-6 shadow-strong">
+          <Card className="p-8 mb-6 shadow-strong hover-lift animate-scale-in border-primary/10">
             {/* Location Status */}
             <div className="mb-8">
               <div className="flex items-center justify-between mb-4">
@@ -374,17 +374,21 @@ const Emergency = () => {
                   disabled={!location}
                   variant={isRecording ? "secondary" : "emergency"}
                   size="lg"
-                  className="w-64 h-64 rounded-full text-xl font-bold shadow-emergency hover:scale-105 transition-all"
+                  className={`w-64 h-64 rounded-full text-xl font-bold transition-all ${
+                    isRecording 
+                      ? 'shadow-strong animate-pulse' 
+                      : 'shadow-emergency hover:scale-110 animate-glow hover:shadow-glow'
+                  }`}
                 >
                   {isRecording ? (
-                    <div className="flex flex-col items-center gap-3">
+                    <div className="flex flex-col items-center gap-3 animate-scale-in">
                       <Loader2 className="h-12 w-12 animate-spin" />
-                      <span>Recording...<br />Tap to Stop</span>
+                      <span>{t('emergency.recording')}<br />{t('emergency.tapToStop')}</span>
                     </div>
                   ) : (
-                    <div className="flex flex-col items-center gap-3">
+                    <div className="flex flex-col items-center gap-3 animate-scale-in">
                       <AlertTriangle className="h-16 w-16" />
-                      <span>Press to<br />Report SOS</span>
+                      <span>{t('emergency.pressToReport')}</span>
                     </div>
                   )}
                 </Button>
@@ -450,7 +454,7 @@ const Emergency = () => {
           
           {/* Quick Info Cards */}
           <div className="grid md:grid-cols-2 gap-4">
-            <Card className="p-6">
+            <Card className="p-6 hover-lift animate-fade-in border-primary/10" style={{ animationDelay: '0.2s' }}>
               <h3 className="font-semibold mb-2 flex items-center gap-2">
                 <AlertTriangle className="h-5 w-5 text-warning" />
                 What Happens Next?
@@ -463,7 +467,7 @@ const Emergency = () => {
               </ul>
             </Card>
             
-            <Card className="p-6">
+            <Card className="p-6 hover-lift animate-fade-in border-primary/10" style={{ animationDelay: '0.3s' }}>
               <h3 className="font-semibold mb-2 flex items-center gap-2">
                 <MapPin className="h-5 w-5 text-primary" />
                 Emergency Hotlines

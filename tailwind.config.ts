@@ -75,11 +75,14 @@ colors: {
       backgroundImage: {
         "gradient-hero": "var(--gradient-hero)",
         "gradient-emergency": "var(--gradient-emergency)",
+        "gradient-success": "var(--gradient-success)",
+        "gradient-glow": "var(--gradient-glow)",
       },
       boxShadow: {
         soft: "var(--shadow-soft)",
         strong: "var(--shadow-strong)",
         emergency: "var(--shadow-emergency)",
+        glow: "var(--shadow-glow)",
       },
       borderRadius: {
         lg: "var(--radius)",
