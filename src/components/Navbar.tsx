@@ -77,6 +77,14 @@ export const Navbar = () => {
               Notifications
             </Link>
             <Link 
+              to="/analytics" 
+              className={`text-sm font-medium transition-colors hover:text-primary ${
+                isActive("/analytics") ? "text-primary" : "text-muted-foreground"
+              }`}
+            >
+              Analytics
+            </Link>
+            <Link 
               to="/about" 
               className={`text-sm font-medium transition-colors hover:text-primary ${
                 isActive("/about") ? "text-primary" : "text-muted-foreground"
@@ -169,6 +177,15 @@ export const Navbar = () => {
                     }`}
                   >
                     Notifications
+                  </Link>
+                  <Link 
+                    to="/analytics" 
+                    onClick={() => setIsOpen(false)}
+                    className={`text-lg font-medium transition-colors hover:text-primary ${
+                      isActive("/analytics") ? "text-primary" : "text-muted-foreground"
+                    }`}
+                  >
+                    Analytics
                   </Link>
                   <Link 
                     to="/about" 
