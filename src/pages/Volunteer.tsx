@@ -61,6 +61,15 @@ const Volunteer = () => {
         
         setUser(currentUser);
         setIsAuthorized(true);
+        
+        // Request notification permission
+        if ('Notification' in window && Notification.permission === 'default') {
+          Notification.requestPermission().then(permission => {
+            if (permission === 'granted') {
+              toast.success("🔔 Browser notifications enabled! You'll be alerted for new emergencies.");
+            }
+          });
+        }
       } catch (error) {
         console.error("Auth check error:", error);
         navigate("/auth");
