@@ -12,6 +12,7 @@ import About from "./pages/About";
 import NearbyServices from "./pages/NearbyServices";
 import QuickDial from "./pages/QuickDial";
 import Notifications from "./pages/Notifications";
+import Analytics from "./pages/Analytics";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -32,6 +33,7 @@ const App = () => (
           <Route path="/nearby-services" element={<NearbyServices />} />
           <Route path="/quick-dial" element={<QuickDial />} />
           <Route path="/notifications" element={<Notifications />} />
+          <Route path="/analytics" element={<Analytics />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />
         </Routes>

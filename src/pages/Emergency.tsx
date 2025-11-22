@@ -156,19 +156,48 @@ const Emergency = () => {
     setIsSubmitting(true);
 
     try {
+      // Get AI analysis first
+      toast.info("🤖 AI analyzing your emergency...");
+      
+      const { data: analysisData, error: aiError } = await supabase.functions.invoke('analyze-incident', {
+        body: {
+          transcript,
+          incidentType: 'accident',
+          location: address || `${location.lat}, ${location.lng}`
+        }
+      });
+
+      let aiAnalysis = null;
+      let suggestedSeverity = 'high';
+      
+      if (!aiError && analysisData?.analysis) {
+        aiAnalysis = analysisData.analysis;
+        // Parse severity from AI response
+        if (aiAnalysis.toLowerCase().includes('critical')) {
+          suggestedSeverity = 'critical';
+        } else if (aiAnalysis.toLowerCase().includes('low')) {
+          suggestedSeverity = 'low';
+        } else if (aiAnalysis.toLowerCase().includes('medium')) {
+          suggestedSeverity = 'medium';
+        }
+        console.log('AI Analysis:', aiAnalysis);
+      }
+
       // Get current user
       const { data: { user } } = await supabase.auth.getUser();
 
-      // Save incident to database
+      // Save incident to database with AI analysis
       const { data, error } = await supabase
         .from('incidents')
         .insert({
-          description: transcript,
+          voice_transcript: transcript,
+          description: aiAnalysis || transcript,
           location_lat: location.lat,
           location_lng: location.lng,
-          incident_type: 'accident', // Can be enhanced with AI classification
-          severity: 'high', // Can be enhanced with AI classification
-          status: 'pending',
+          location_address: address || null,
+          incident_type: 'accident' as const,
+          severity: suggestedSeverity as 'low' | 'medium' | 'high' | 'critical',
+          status: 'pending' as const,
           reporter_id: user?.id || null,
         })
         .select()
@@ -176,7 +205,7 @@ const Emergency = () => {
 
       if (error) throw error;
 
-      toast.success("Emergency report submitted! Volunteers are being notified.");
+      toast.success("🚨 Emergency reported! AI-powered alert sent to volunteers.");
       
       // Navigate to volunteer page after 2 seconds
       setTimeout(() => {

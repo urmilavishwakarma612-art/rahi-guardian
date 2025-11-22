@@ -156,7 +156,32 @@ const Volunteer = () => {
           schema: 'public',
           table: 'incidents',
         },
-        () => {
+        (payload) => {
+          console.log('Real-time update:', payload);
+          
+          // Show browser notification for new incidents
+          if (payload.eventType === 'INSERT' && 'Notification' in window) {
+            const incident = payload.new as any;
+            
+            if (Notification.permission === 'granted') {
+              new Notification('🚨 New Emergency Alert!', {
+                body: `${incident.incident_type} - ${incident.location_address || 'Location unavailable'}`,
+                icon: '/LOGO-RAHI .png',
+                tag: incident.id,
+              });
+            } else if (Notification.permission !== 'denied') {
+              Notification.requestPermission().then(permission => {
+                if (permission === 'granted') {
+                  new Notification('🚨 New Emergency Alert!', {
+                    body: `${incident.incident_type} - ${incident.location_address || 'Location unavailable'}`,
+                    icon: '/LOGO-RAHI .png',
+                    tag: incident.id,
+                  });
+                }
+              });
+            }
+          }
+          
           fetchIncidents();
         }
       )
