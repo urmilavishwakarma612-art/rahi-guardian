@@ -88,14 +88,6 @@ export const Navbar = () => {
               Analytics
             </Link>
             <Link 
-              to="/demo" 
-              className={`text-sm font-medium transition-colors hover:text-warning ${
-                isActive("/demo") ? "text-warning" : "text-muted-foreground"
-              }`}
-            >
-              🏆 Demo
-            </Link>
-            <Link 
               to="/about" 
               className={`text-sm font-medium transition-colors hover:text-primary ${
                 isActive("/about") ? "text-primary" : "text-muted-foreground"
@@ -198,15 +190,6 @@ export const Navbar = () => {
                     }`}
                   >
                     Analytics
-                  </Link>
-                  <Link 
-                    to="/demo" 
-                    onClick={() => setIsOpen(false)}
-                    className={`text-lg font-medium transition-colors hover:text-warning ${
-                      isActive("/demo") ? "text-warning" : "text-muted-foreground"
-                    }`}
-                  >
-                    🏆 Demo
                   </Link>
                   <Link 
                     to="/about" 
