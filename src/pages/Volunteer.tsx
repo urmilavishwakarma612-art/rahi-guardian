@@ -271,7 +271,14 @@ const Volunteer = () => {
 
       if (error) throw error;
 
-      toast.success("Mission accepted! Prepare to respond.");
+      // Immediately update local state
+      setIncidents(prev => prev.map(inc => 
+        inc.id === incidentId 
+          ? { ...inc, status: 'accepted', assigned_volunteer_id: volunteerId }
+          : inc
+      ));
+
+      toast.success("Mission accepted! Click 'On The Way' to continue.");
       
       if ('Notification' in window && Notification.permission === 'default') {
         await Notification.requestPermission();
@@ -291,7 +298,12 @@ const Volunteer = () => {
 
       if (error) throw error;
 
-      toast.success("Status updated: On the way!");
+      // Immediately update local state
+      setIncidents(prev => prev.map(inc => 
+        inc.id === incidentId ? { ...inc, status: 'on_the_way' } : inc
+      ));
+
+      toast.success("Status updated: On the way! Drive safely 🚗");
     } catch (error: any) {
       console.error('Error updating status:', error);
       toast.error("Failed to update status");
@@ -307,7 +319,12 @@ const Volunteer = () => {
 
       if (error) throw error;
 
-      toast.success("Arrived at location! Stay safe.");
+      // Immediately update local state
+      setIncidents(prev => prev.map(inc => 
+        inc.id === incidentId ? { ...inc, status: 'arrived' } : inc
+      ));
+
+      toast.success("Arrived at location! Provide assistance 🏥");
     } catch (error: any) {
       console.error('Error updating status:', error);
       toast.error("Failed to update status");
@@ -329,7 +346,14 @@ const Volunteer = () => {
 
       if (error) throw error;
 
-      toast.success("Incident completed! Great work.");
+      // Immediately update local state
+      setIncidents(prev => prev.map(inc => 
+        inc.id === completingIncident 
+          ? { ...inc, status: 'completed', volunteer_notes: notes, resolved_at: new Date().toISOString() }
+          : inc
+      ));
+
+      toast.success("Incident completed! Great work 🎉");
       setCompletingIncident(null);
       setNotes("");
     } catch (error: any) {
