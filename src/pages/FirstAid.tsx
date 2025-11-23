@@ -5,7 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Heart, Search, AlertTriangle, Flame, Activity, Wind, Phone, Clock, Info } from "lucide-react";
+import { Heart, Search, AlertTriangle, Flame, Activity, Wind, Phone, Clock, Info, WifiOff, Shield } from "lucide-react";
 import { useState } from "react";
 
 const FirstAid = () => {
@@ -137,6 +137,30 @@ const FirstAid = () => {
             "Continue until help arrives or person starts breathing",
           ],
         },
+        {
+          title: "Fracture Management",
+          steps: [
+            "Do NOT try to realign broken bones",
+            "Immobilize the injured area using splints or rigid materials",
+            "Use clothing, sticks, or rolled newspapers as splints",
+            "Secure splint above and below the fracture site",
+            "Apply ice pack wrapped in cloth to reduce swelling",
+            "Keep the person still and calm",
+            "Call 108 for medical assistance",
+          ],
+        },
+        {
+          title: "Shock Treatment",
+          steps: [
+            "Lay the person down and elevate legs 12 inches (if no spinal injury)",
+            "Keep them warm with blankets or jackets",
+            "Do NOT give them anything to eat or drink",
+            "Loosen tight clothing",
+            "Monitor breathing and pulse",
+            "Turn head to side if vomiting occurs",
+            "Call 108 immediately",
+          ],
+        },
       ],
     },
   ];
@@ -156,9 +180,19 @@ const FirstAid = () => {
         <div className="max-w-6xl mx-auto">
           {/* Header */}
           <div className="text-center mb-12">
-            <div className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-full mb-4">
-              <Heart className="h-5 w-5" />
-              <span className="font-semibold">First Aid Knowledge Center</span>
+            <div className="flex flex-wrap items-center justify-center gap-3 mb-4">
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-success/10 text-success rounded-full">
+                <Heart className="h-5 w-5" />
+                <span className="font-semibold">First Aid Knowledge Center</span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-primary/10 text-primary rounded-full">
+                <WifiOff className="h-5 w-5" />
+                <span className="font-semibold">Works Offline</span>
+              </div>
+              <div className="inline-flex items-center gap-2 px-4 py-2 bg-warning/10 text-warning rounded-full">
+                <Shield className="h-5 w-5" />
+                <span className="font-semibold">Help Yourself First</span>
+              </div>
             </div>
             <h1 className="text-5xl font-bold mb-4 bg-gradient-hero bg-clip-text text-transparent">
               Emergency First Aid Guide
