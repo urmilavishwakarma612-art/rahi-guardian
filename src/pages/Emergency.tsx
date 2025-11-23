@@ -2,6 +2,7 @@ import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { Navbar } from "@/components/Navbar";
 import { Footer } from "@/components/Footer";
+import { ConnectivityStatus } from "@/components/ConnectivityStatus";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { AlertTriangle, Mic, MapPin, CheckCircle, XCircle, Loader2, Camera } from "lucide-react";
@@ -307,6 +308,11 @@ const Emergency = () => {
             <p className="text-lg text-muted-foreground animate-slide-up" style={{ animationDelay: '0.1s' }}>
               {t('emergency.subtitle')}
             </p>
+          </div>
+
+          {/* Connectivity Status */}
+          <div className="mb-6">
+            <ConnectivityStatus />
           </div>
           
           {/* Main Emergency Card */}
